@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "digikala-mcp"
+version = "0.1.0"
+description = "Shopping MCP for Digikala catalog and bounded cart operations"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = ["httpx>=0.28,<0.29", "mcp==2.2.0", "pydantic>=2.12,<3", "keyring>=25,<26"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "pytest-asyncio>=1,<2", "ruff>=0.12,<1", "pyright>=1.1.409,<2"]
+
+[project.scripts]
+digikala-mcp = "src.server:main"
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+typeCheckingMode = "standard"
+reportDeprecated = "error"
+venvPath = "."
+venv = ".venv"
