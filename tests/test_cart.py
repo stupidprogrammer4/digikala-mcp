@@ -241,6 +241,37 @@ def test_separate_process_locks_conflict(tmp_path):
                 pytest.fail("Second journal should not acquire the lock")
 
 
+async def test_cart_tools_over_mcp(cart_setup):
+    from mcp import Client
+
+    from src.server import create_server
+
+    service, gateway = cart_setup
+    async with Client(create_server(cart_service=service)) as client:
+        limits = await client.call_tool("get_cart_limits")
+        assert limits.structured_content["limits"]["max_items"] == 3
+        cart = await client.call_tool("read_cart")
+        assert cart.structured_content["total_items"] == 0
+        for change, tool in [
+            ({"action": "add", "product_id": "1", "offer_id": "10"}, "add_to_cart"),
+            ({"action": "update", "cart_item_id": 5, "quantity": 2}, "update_cart_item"),
+            ({"action": "remove", "cart_item_id": 5}, "remove_from_cart"),
+        ]:
+            preview = await client.call_tool("prepare_cart_change", {"change": change})
+            assert not preview.is_error
+            result = await client.call_tool(
+                tool, {"plan_id": preview.structured_content["plan_id"]}
+            )
+            assert not result.is_error
+            assert result.structured_content["state"] == "applied"
+        assert gateway.writes == ["add", "update", "remove"]
+        invalid = await client.call_tool(
+            "prepare_cart_change",
+            {"change": {"action": "update", "cart_item_id": 5, "quantity": 0}},
+        )
+        assert invalid.is_error
+
+
 async def test_exceeded_limits_after_upstream_change_are_reported(cart_setup):
     service, gateway = cart_setup
     plan = await service.prepare(add())
