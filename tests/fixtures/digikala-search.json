@@ -1,0 +1,183 @@
+{
+  "status": 200,
+  "data": {
+    "widgets": [
+      {
+        "type": "vertical_product_listing",
+        "data": {
+          "pager": {
+            "current_page": 1,
+            "total_items": 871,
+            "total_pages": 44,
+            "total_slots": 29
+          },
+          "widgets": [
+            {
+              "type": "product",
+              "data": {
+                "id": 22672438,
+                "title_fa": "هدفون بلوتوثی دبلیو کی دیزاین مدل INAIR32 ",
+                "status": "marketable",
+                "default_variant": {
+                  "id": 84016750,
+                  "seller": {
+                    "id": 289366,
+                    "title": "برزان",
+                    "code": "C2NNT",
+                    "url": "/seller/C2NNT/",
+                    "rating": {
+                      "total_rate": 74,
+                      "total_count": 38396,
+                      "commitment": 0,
+                      "no_return": 0,
+                      "on_time_shipping": 0
+                    },
+                    "properties": {
+                      "is_trusted": false,
+                      "is_official": false,
+                      "is_roosta": false,
+                      "is_new": false
+                    },
+                    "stars": null,
+                    "grade": {
+                      "label": "بدون عملکرد",
+                      "color": "#81858B"
+                    },
+                    "registration_date": "",
+                    "logo": null
+                  },
+                  "color": {
+                    "id": 2,
+                    "title": "سفید",
+                    "code": "#FFFFFF",
+                    "hex_code": "#FFFFFF"
+                  },
+                  "themes": [
+                    {
+                      "value": {
+                        "variant_id": 84016750,
+                        "id": 2,
+                        "title": "سفید",
+                        "code": "#FFFFFF",
+                        "hex_code": "#FFFFFF",
+                        "nature": "color"
+                      },
+                      "label": "رنگ",
+                      "type": "colored",
+                      "is_main": true
+                    }
+                  ],
+                  "price": {
+                    "selling_price": 27999900,
+                    "rrp_price": 280000000,
+                    "order_limit": 5,
+                    "is_incredible": true,
+                    "is_promotion": true,
+                    "is_locked_for_digiplus": false,
+                    "bnpl_active": false,
+                    "discount_percent": 90,
+                    "min_order_limit": 1,
+                    "is_lightening_deal": true,
+                    "badge": {
+                      "title": "شگفت‌انگیز سفارشی"
+                    },
+                    "discount": 90,
+                    "show_discount_badge": true,
+                    "timer": 2967
+                  },
+                  "status": "marketable",
+                  "warranty": {
+                    "id": 3,
+                    "title_fa": "سرویس ویژه دیجی کالا: 7 روز تضمین بازگشت کالا",
+                    "title_en": "سرویس ویژه دیجی کالا: 7 روز تضمین بازگشت کالا"
+                  }
+                }
+              }
+            },
+            {
+              "type": "product",
+              "data": {
+                "id": 17986726,
+                "title_fa": "هندزفری ایفورج مدل MA-107",
+                "status": "marketable",
+                "default_variant": {
+                  "id": 62904244,
+                  "seller": {
+                    "id": 422306,
+                    "title": "جووینکو",
+                    "code": "CKWXX",
+                    "url": "/seller/CKWXX/",
+                    "rating": {
+                      "total_rate": 82,
+                      "total_count": 7004,
+                      "commitment": 0,
+                      "no_return": 0,
+                      "on_time_shipping": 0
+                    },
+                    "properties": {
+                      "is_trusted": false,
+                      "is_official": false,
+                      "is_roosta": false,
+                      "is_new": false
+                    },
+                    "stars": null,
+                    "grade": {
+                      "label": "بدون عملکرد",
+                      "color": "#81858B"
+                    },
+                    "registration_date": "",
+                    "logo": null
+                  },
+                  "color": {
+                    "id": 1,
+                    "title": "مشکی",
+                    "code": "#000000",
+                    "hex_code": "#000000"
+                  },
+                  "themes": [
+                    {
+                      "value": {
+                        "variant_id": 62904244,
+                        "id": 1,
+                        "title": "مشکی",
+                        "code": "#000000",
+                        "hex_code": "#000000",
+                        "nature": "color"
+                      },
+                      "label": "رنگ",
+                      "type": "colored",
+                      "is_main": true
+                    }
+                  ],
+                  "price": {
+                    "selling_price": 7700000,
+                    "rrp_price": 13900000,
+                    "order_limit": 5,
+                    "is_incredible": false,
+                    "is_promotion": true,
+                    "is_locked_for_digiplus": false,
+                    "bnpl_active": false,
+                    "discount_percent": 45,
+                    "min_order_limit": 1,
+                    "badge": {
+                      "title": "فروش ویژه"
+                    },
+                    "discount": 45,
+                    "is_selling_and_sales": true,
+                    "show_discount_badge": true
+                  },
+                  "status": "marketable",
+                  "warranty": {
+                    "id": 3,
+                    "title_fa": "سرویس ویژه دیجی کالا: 7 روز تضمین بازگشت کالا",
+                    "title_en": "سرویس ویژه دیجی کالا: 7 روز تضمین بازگشت کالا"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

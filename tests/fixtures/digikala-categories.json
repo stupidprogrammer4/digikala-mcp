@@ -1,0 +1,100 @@
+{
+  "status": 200,
+  "data": [
+    {
+      "type": "category_tree",
+      "data": {
+        "data": [
+          {
+            "category": {
+              "id": 1,
+              "title_fa": "موبایل",
+              "title_en": "موبایل",
+              "code": "mobile"
+            }
+          },
+          {
+            "category": {
+              "id": 3,
+              "title_fa": "لپ تاپ",
+              "title_en": "لپ تاپ",
+              "code": "laptop"
+            },
+            "parent_id": 5966
+          },
+          {
+            "category": {
+              "id": 11,
+              "title_fa": "گوشی موبایل",
+              "title_en": "گوشی موبایل",
+              "code": "mobile-phone"
+            },
+            "parent_id": 1
+          },
+          {
+            "category": {
+              "id": 18,
+              "title_fa": "لپ تاپ و الترابوک",
+              "title_en": "لپ تاپ و الترابوک",
+              "code": "notebook-netbook-ultrabook"
+            },
+            "parent_id": 3
+          },
+          {
+            "category": {
+              "id": 211,
+              "title_fa": "هدفون، هدست و هندزفری",
+              "title_en": "هدفون، هدست و هندزفری",
+              "code": "headphone"
+            },
+            "parent_id": 5966
+          },
+          {
+            "category": {
+              "id": 5966,
+              "title_fa": "کالای دیجیتال",
+              "title_en": "کالای دیجیتال",
+              "code": "electronic-devices"
+            }
+          },
+          {
+            "category": {
+              "id": 5967,
+              "title_fa": "خانه و آشپزخانه",
+              "title_en": "خانه، آشپزخانه و ابزار",
+              "code": "home-and-kitchen"
+            }
+          },
+          {
+            "category": {
+              "id": 11545,
+              "title_fa": "بین بگ",
+              "title_en": "beanbag",
+              "code": "beanbag"
+            },
+            "parent_id": 10647
+          },
+          {
+            "category": {
+              "id": 11545,
+              "title_fa": "بین بگ",
+              "title_en": "beanbag",
+              "code": "beanbag"
+            },
+            "parent_id": 10647
+          },
+          {
+            "category": {
+              "id": 11545,
+              "title_fa": "بین بگ",
+              "title_en": "beanbag",
+              "code": "beanbag"
+            },
+            "parent_id": 10647
+          }
+        ],
+        "hash": "80f3c33f8746996fddfb6c8d9af2e3af"
+      }
+    }
+  ]
+}

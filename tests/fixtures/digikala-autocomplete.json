@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "data": {
+    "auto_complete": [
+      {
+        "type": "category",
+        "id": 211,
+        "title": "هندزفری بلوتوثی",
+        "category_title": "هدفون، هدست و هندزفری",
+        "url": {
+          "url": "/search/category-headphone/?q=%D9%87%D9%86%D8%AF%D8%B2%D9%81%D8%B1%DB%8C+%D8%A8%D9%84%D9%88%D8%AA%D9%88%D8%AB%DB%8C"
+        }
+      },
+      {
+        "type": "category",
+        "id": 211,
+        "title": "هندزفری",
+        "category_title": "هدفون، هدست و هندزفری",
+        "url": {
+          "url": "/search/category-headphone/?q=%D9%87%D9%86%D8%AF%D8%B2%D9%81%D8%B1%DB%8C"
+        }
+      }
+    ]
+  }
+}
