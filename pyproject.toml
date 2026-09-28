@@ -9,7 +9,17 @@ description = "Shopping MCP for Digikala catalog and bounded cart operations"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
-dependencies = ["httpx>=0.28,<0.29", "mcp==2.2.0", "pydantic>=2.12,<3", "keyring>=25,<26"]
+dependencies = [
+    "httpx>=0.28,<0.29",
+    "fastmcp==4.0.10",
+    "dishka==1.10.1",
+    "mcp-types>=2.2,<3",
+    "pydantic>=2.12,<3",
+    "keyring>=25,<26",
+    "psycopg[binary]>=3.2,<4",
+    "sqlmodel==0.0.47",
+    "sqlalchemy[asyncio]>=2.0,<2.1",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "pytest-asyncio>=1,<2", "ruff>=0.12,<1", "pyright>=1.1.409,<2"]
