@@ -1,0 +1,113 @@
+{
+  "status": 200,
+  "data": {
+    "comments": [
+      {
+        "id": 90046689,
+        "product_id": 22672438,
+        "body": "خیلی کیفیتش خوب بود واقعا راضی بودم برای خودم گرفتم و دوتا عمو هام عم دیدن خیلی راضی بودن برای اونا هم گرفتم کیفیت ساختش موزیکش مکالمه اش واقعا عالیه تو این رنج قیمت  فوق العاده\n\n",
+        "rate": 5,
+        "is_buyer": 1,
+        "created_at": "2 مهر 1405",
+        "advantages": [],
+        "disadvantages": [],
+        "reactions": {
+          "likes": 0,
+          "dislikes": 1
+        }
+      },
+      {
+        "id": 90028175,
+        "product_id": 22672438,
+        "body": "خیلی نسبت به قیمتش مناسبه من به داداشم هدیه دادم شارژ رو خیلی خوب نگه میداره و موقع مکالمه خیلی صدا رو قشنگ و خوب میرسونه به مخاطب کلا پیشنهاد میکم بخرید👌🏻\n\n",
+        "rate": 5,
+        "is_buyer": 1,
+        "created_at": "1 مهر 1405",
+        "advantages": [],
+        "disadvantages": [],
+        "reactions": {
+          "likes": 0,
+          "dislikes": 0
+        }
+      },
+      {
+        "id": 90028178,
+        "product_id": 22672438,
+        "body": "جنس عالی بود . کیفیت صدا خیلی خوبه . تا حالا عملکرد خوبی داشته .من که راضیم . به موقع تحویل شد.\n\n",
+        "rate": 5,
+        "is_buyer": 1,
+        "created_at": "1 مهر 1405",
+        "advantages": [],
+        "disadvantages": [],
+        "reactions": {
+          "likes": 0,
+          "dislikes": 0
+        }
+      },
+      {
+        "id": 90028184,
+        "product_id": 22672438,
+        "body": "کیفیت صدا عالی،خیلی هم زیباس،بسته بندی عالی وبی تقص،ممنون ازدیجی کالا\n\n",
+        "rate": 5,
+        "is_buyer": 1,
+        "created_at": "1 مهر 1405",
+        "advantages": [],
+        "disadvantages": [],
+        "reactions": {
+          "likes": 0,
+          "dislikes": 0
+        }
+      },
+      {
+        "id": 90046674,
+        "product_id": 22672438,
+        "body": "هدیه دادم از کیفیت خیلی راضی بود و تو تخفیف واقعا ارزش خرید داره\n\n",
+        "rate": 5,
+        "is_buyer": 1,
+        "created_at": "2 مهر 1405",
+        "advantages": [],
+        "disadvantages": [],
+        "reactions": {
+          "likes": 0,
+          "dislikes": 0
+        }
+      },
+      {
+        "id": 90046678,
+        "product_id": 22672438,
+        "body": "حجم صدا فوق العادست واقعا نسبت به قیمتش خوشم اومد ازش بخرید\n\n",
+        "rate": 5,
+        "is_buyer": 1,
+        "created_at": "2 مهر 1405",
+        "advantages": [],
+        "disadvantages": [],
+        "reactions": {
+          "likes": 0,
+          "dislikes": 0
+        }
+      }
+    ],
+    "pager": {
+      "current_page": 1,
+      "total_pages": 1,
+      "total_items": 6
+    },
+    "sort": {
+      "default": "default"
+    },
+    "sort_options": [
+      {
+        "id": "newest",
+        "title": "جدیدترین"
+      },
+      {
+        "id": "buyers",
+        "title": "دیدگاه خریداران"
+      },
+      {
+        "id": "default",
+        "title": "مفیدترین"
+      }
+    ]
+  }
+}

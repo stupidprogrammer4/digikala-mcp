@@ -1,0 +1,37 @@
+{
+  "data": {
+    "sections": [
+      {
+        "key": "similar_products",
+        "type": "carousel",
+        "template": "grid"
+      },
+      {
+        "key": "neighbor_category_0",
+        "type": "carousel",
+        "template": "grid"
+      },
+      {
+        "key": "neighbor_category_1",
+        "type": "carousel",
+        "template": "grid"
+      },
+      {
+        "key": "neighbor_category_2",
+        "type": "carousel",
+        "template": "grid"
+      },
+      {
+        "key": "neighbor_category_3",
+        "type": "carousel",
+        "template": "grid"
+      },
+      {
+        "key": "neighbor_category_4",
+        "type": "carousel",
+        "template": "grid"
+      }
+    ],
+    "recom_version": null
+  }
+}

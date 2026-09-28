@@ -1,0 +1,413 @@
+{
+  "status": 200,
+  "data": {
+    "product": {
+      "id": 22672438,
+      "title_fa": "هدفون بلوتوثی دبلیو کی دیزاین مدل INAIR32 ",
+      "status": "marketable",
+      "brand": {
+        "id": 31319,
+        "code": "wk-design",
+        "title_fa": "دبلیو کی دیزاین",
+        "title_en": "WK DESIGN",
+        "url": {
+          "uri": "/brand/wk-design/"
+        },
+        "visibility": true,
+        "logo": {
+          "url": [
+            "https://dkstatics-public.digikala.com/digikala-brands/3dbfd340683357dcd2f2a63e2473d76dd2514d8d_1638361189.jpg?x-oss-process=image/resize,m_lfit,h_120,w_120/quality,q_80"
+          ]
+        },
+        "is_premium": false,
+        "is_miscellaneous": false,
+        "is_name_similar": false
+      },
+      "category": {
+        "id": 211,
+        "title_fa": "هدفون، هدست و هندزفری",
+        "title_en": "هدفون، هدست و هندزفری",
+        "code": "headphone",
+        "content_description": "",
+        "content_box": "",
+        "return_reason_alert": "درخواست مرجوع کردن کالا در گروه هدفون، هدست و هندزفری با دلیل \"انصراف از خرید\" تنها در صورتی قابل تایید است که کالا در شرایط اولیه باشد (در صورت پلمب بودن، کالا نباید باز شده باشد)."
+      },
+      "rating": {
+        "rate": 100.0,
+        "count": 7,
+        "percentages": {
+          "20": 0.0,
+          "40": 0.0,
+          "60": 0.0,
+          "80": 0.0,
+          "100": 100.0
+        }
+      },
+      "suggestion": {
+        "count": 0,
+        "percentage": 50
+      },
+      "comments_count": 6,
+      "questions_count": 3,
+      "default_variant": {
+        "id": 84016750,
+        "status": "marketable",
+        "themes": [
+          {
+            "value": {
+              "variant_id": 84016750,
+              "id": 2,
+              "title": "سفید",
+              "code": "#FFFFFF",
+              "hexCode": "#FFFFFF",
+              "hex_code": "#FFFFFF",
+              "nature": "color"
+            },
+            "label": "رنگ",
+            "type": "colored",
+            "is_main": true
+          }
+        ],
+        "color": {
+          "id": 2,
+          "title": "سفید",
+          "hex_code": "#FFFFFF"
+        },
+        "price": {
+          "selling_price": 28500000,
+          "rrp_price": 280000000,
+          "order_limit": 5,
+          "is_incredible": false,
+          "is_promotion": true,
+          "is_locked_for_digiplus": false,
+          "bnpl_active": false,
+          "discount_percent": 90,
+          "sold_percentage": 1,
+          "is_plus_early_access": false,
+          "min_order_limit": 1,
+          "badge": {
+            "color": "#E6123D",
+            "icon": null,
+            "title": "فروش ویژه"
+          },
+          "is_application_incredible": false,
+          "is_digiplus_early_access": false,
+          "is_digiplus_promotion": false,
+          "is_lightening_deal": false
+        },
+        "lead_time": 0,
+        "warranty": {
+          "id": 3,
+          "title_fa": "سرویس ویژه دیجی کالا: 7 روز تضمین بازگشت کالا",
+          "title_en": "سرویس ویژه دیجی کالا: 7 روز تضمین بازگشت کالا"
+        },
+        "seller": {
+          "id": 289366,
+          "title": "برزان",
+          "rating": {
+            "total_rate": 74.0,
+            "total_count": 38415,
+            "commitment": 99.9,
+            "no_return": 99.6,
+            "on_time_shipping": 99.7
+          },
+          "stars": 5.0,
+          "grade": {
+            "label": "عالی",
+            "color": "#00a049"
+          }
+        },
+        "shipment_methods": {
+          "description": "موجود در انبار دیجی‌کالا"
+        }
+      },
+      "variants": [
+        {
+          "id": 84016750,
+          "status": "marketable",
+          "themes": [
+            {
+              "value": {
+                "variant_id": 84016750,
+                "id": 2,
+                "title": "سفید",
+                "code": "#FFFFFF",
+                "hexCode": "#FFFFFF",
+                "hex_code": "#FFFFFF",
+                "nature": "color"
+              },
+              "label": "رنگ",
+              "type": "colored",
+              "is_main": true
+            }
+          ],
+          "color": {
+            "id": 2,
+            "title": "سفید",
+            "hex_code": "#FFFFFF"
+          },
+          "price": {
+            "selling_price": 28500000,
+            "rrp_price": 280000000,
+            "order_limit": 5,
+            "is_incredible": false,
+            "is_promotion": true,
+            "is_locked_for_digiplus": false,
+            "bnpl_active": false,
+            "discount_percent": 90,
+            "sold_percentage": 1,
+            "is_plus_early_access": false,
+            "min_order_limit": 1,
+            "badge": {
+              "color": "#E6123D",
+              "icon": null,
+              "title": "فروش ویژه"
+            },
+            "is_application_incredible": false,
+            "is_digiplus_early_access": false,
+            "is_digiplus_promotion": false,
+            "is_lightening_deal": false
+          },
+          "lead_time": 0,
+          "warranty": {
+            "id": 3,
+            "title_fa": "سرویس ویژه دیجی کالا: 7 روز تضمین بازگشت کالا",
+            "title_en": "سرویس ویژه دیجی کالا: 7 روز تضمین بازگشت کالا"
+          },
+          "seller": {
+            "id": 289366,
+            "title": "برزان",
+            "rating": {
+              "total_rate": 74.0,
+              "total_count": 38415,
+              "commitment": 99.9,
+              "no_return": 99.6,
+              "on_time_shipping": 99.7
+            },
+            "stars": 5.0,
+            "grade": {
+              "label": "عالی",
+              "color": "#00a049"
+            }
+          },
+          "shipment_methods": {
+            "description": "موجود در انبار دیجی‌کالا"
+          }
+        }
+      ],
+      "specifications": [
+        {
+          "title": "مشخصات",
+          "attributes": [
+            {
+              "title": "نوع هدفون، هدست و هندزفری",
+              "values": [
+                "تو گوشی (Earbud/Earphone) "
+              ]
+            },
+            {
+              "title": "سایر توضیحات اقلام همراه هدفون، هندزفری و هدست",
+              "values": [
+                "چهار عدد سرگوشی (سایزهای بسیار کوچک، کوچک، متوسط و بزرگ) / دفترچه راهنما / کابل شارژر "
+              ]
+            },
+            {
+              "title": "اقلام همراه هدفون، هندزفری و هدست",
+              "values": [
+                "کابل شارژ ",
+                "محفظه شارژ ",
+                "پد گوشی یدکی "
+              ]
+            },
+            {
+              "title": "منبع انرژی",
+              "values": [
+                "باتری قابل شارژ "
+              ]
+            },
+            {
+              "title": "پاسخ فرکانسی",
+              "values": [
+                "۲۰-۲۰۰۰۰ هرتز"
+              ]
+            },
+            {
+              "title": "قابلیت نویز کنسلینگ",
+              "values": [
+                "نویز کنسلینگ فعال (ANC) "
+              ]
+            },
+            {
+              "title": "قابلیت اتصال به چند دستگاه",
+              "values": [
+                "ندارد "
+              ]
+            },
+            {
+              "title": "قطر درایور",
+              "values": [
+                "10 میلی‌متر"
+              ]
+            },
+            {
+              "title": "ویژگی‌های خاص",
+              "values": [
+                "پشتیبانی از فرمان لمسی "
+              ]
+            },
+            {
+              "title": "محدوده عملکرد",
+              "values": [
+                "10 متر"
+              ]
+            },
+            {
+              "title": "نوع گوشی",
+              "values": [
+                "دو گوشی "
+              ]
+            },
+            {
+              "title": "عمر باتری",
+              "values": [
+                "15 "
+              ]
+            },
+            {
+              "title": "عمر باتری هدفون در حالت استندبای",
+              "values": [
+                "200 "
+              ]
+            },
+            {
+              "title": "عمر باتری هدفون در حالت مکالمه",
+              "values": [
+                "6 ساعت"
+              ]
+            },
+            {
+              "title": "عمر باتری هدفون در حالت پخش موسیقی",
+              "values": [
+                "4.5 ساعت"
+              ]
+            },
+            {
+              "title": "عمر باتری محفظه شارژ",
+              "values": [
+                "100 ساعت"
+              ]
+            },
+            {
+              "title": "زمان موردنیاز برای شارژ هدفون",
+              "values": [
+                "1 ساعت"
+              ]
+            },
+            {
+              "title": "زمان مورد نیاز برای شارژ محفظه",
+              "values": [
+                "0.5 ساعت"
+              ]
+            },
+            {
+              "title": "قابلیت‌های شارژ",
+              "values": [
+                "شارژ باسیم "
+              ]
+            },
+            {
+              "title": "درگاه شارژ",
+              "values": [
+                "USB Type-C "
+              ]
+            },
+            {
+              "title": "مشخصات باتری",
+              "values": [
+                "باتری لیتیوم یون قابل شارژ "
+              ]
+            },
+            {
+              "title": "وزن",
+              "values": [
+                "7 گرم"
+              ]
+            },
+            {
+              "title": "نسخه بلوتوث",
+              "values": [
+                "5.3 "
+              ]
+            },
+            {
+              "title": "سایر مشخصات",
+              "values": [
+                "صدای فراگیر، کنترل بلندی صدا، میکروفون، شارژ سریع، کنترل لمسی، کیس نگهدارنده این ایرپاد، کیفیت بالای ساخت.قابل اتصال به همه مدل گوشی و تبلت از طریق بلوتوث "
+              ]
+            },
+            {
+              "title": "جنس بدنه",
+              "values": [
+                "پلی‌کربنات "
+              ]
+            },
+            {
+              "title": "ظرفیت باتری",
+              "values": [
+                "300 میلی‌آمپر‌ساعت"
+              ]
+            },
+            {
+              "title": "نوع کابل",
+              "values": [
+                "USB Type-C "
+              ]
+            },
+            {
+              "title": "نوع اتصال",
+              "values": [
+                "بی‌سیم "
+              ]
+            },
+            {
+              "title": "رابط‌ها",
+              "values": [
+                "بلوتوث "
+              ]
+            },
+            {
+              "title": "امپدانس",
+              "values": [
+                "32 اهم"
+              ]
+            },
+            {
+              "title": "مناسب برای",
+              "values": [
+                "کاربری عمومی "
+              ]
+            },
+            {
+              "title": "قابلیت‌های مقاومتی",
+              "values": [
+                "مقاوم در برابر رطوبت و عرق "
+              ]
+            },
+            {
+              "title": "نسبت سیگنال به نویز",
+              "values": [
+                "96 دسی‌بل"
+              ]
+            },
+            {
+              "title": "حساسیت",
+              "values": [
+                "110 "
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

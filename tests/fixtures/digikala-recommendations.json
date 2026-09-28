@@ -1,0 +1,185 @@
+{
+  "data": {
+    "products": [
+      {
+        "product_id": 18536481,
+        "title_fa": "هدفون بلوتوثی ورنا مدل Airpods Pro K14 بدون قابلیت نویز کنسلینگ، درگاه شارژ لایتنینگ",
+        "rating": {
+          "rate": 78.6092715231788,
+          "count": 302,
+          "percentages": {
+            "20": 12.25,
+            "40": 3.97,
+            "60": 11.92,
+            "80": 22.19,
+            "100": 49.67
+          }
+        },
+        "default_variant_id": 65218775,
+        "variants": [
+          {
+            "variant_id": 65218775,
+            "size": null,
+            "color": {
+              "id": 2,
+              "title": "سفید",
+              "code": null,
+              "hex_code": "#FFFFFF"
+            },
+            "themes": [
+              {
+                "value": {
+                  "id": 2,
+                  "title": "سفید",
+                  "nature": "color",
+                  "code": "#FFFFFF"
+                },
+                "label": "رنگ",
+                "type": "colored",
+                "is_main": true
+              }
+            ],
+            "pricing": {
+              "available_on_website": true,
+              "pricing_stock": {
+                "marketable_stock": 39,
+                "order_limit": 10,
+                "limit": 64,
+                "skip_inventory": false,
+                "is_scheduled_stock": false,
+                "selling_price": 12400000,
+                "is_promotion": true
+              }
+            },
+            "seller": {
+              "id": 86326,
+              "name": "درسا پخش"
+            }
+          }
+        ],
+        "is_ad": false,
+        "category_id": 211
+      },
+      {
+        "product_id": 11627919,
+        "title_fa": "هدفون بلوتوثی آنر مدل X3",
+        "rating": {
+          "rate": 87.23076923076923,
+          "count": 130,
+          "percentages": {
+            "20": 3.85,
+            "40": 2.31,
+            "60": 4.62,
+            "80": 32.31,
+            "100": 56.91
+          }
+        },
+        "default_variant_id": 69544410,
+        "variants": [
+          {
+            "variant_id": 69544410,
+            "size": null,
+            "color": {
+              "id": 2,
+              "title": "سفید",
+              "code": null,
+              "hex_code": "#FFFFFF"
+            },
+            "themes": [
+              {
+                "value": {
+                  "id": 2,
+                  "title": "سفید",
+                  "nature": "color",
+                  "code": "#FFFFFF"
+                },
+                "label": "رنگ",
+                "type": "colored",
+                "is_main": true
+              }
+            ],
+            "pricing": {
+              "available_on_website": true,
+              "pricing_stock": {
+                "marketable_stock": 3,
+                "order_limit": 10,
+                "limit": null,
+                "skip_inventory": false,
+                "is_scheduled_stock": false,
+                "selling_price": 200001000,
+                "is_promotion": false
+              }
+            },
+            "seller": {
+              "id": 766648,
+              "name": "واینکست شاپ"
+            }
+          }
+        ],
+        "is_ad": false,
+        "category_id": 211
+      },
+      {
+        "product_id": 7614854,
+        "title_fa": "هدفون بلوتوثی مدل ایرپاد Pro",
+        "rating": {
+          "rate": 69.76430976430976,
+          "count": 297,
+          "percentages": {
+            "20": 23.91,
+            "40": 3.03,
+            "60": 13.13,
+            "80": 20.2,
+            "100": 39.73
+          }
+        },
+        "default_variant_id": 64284343,
+        "variants": [
+          {
+            "variant_id": 64284343,
+            "size": null,
+            "color": {
+              "id": 2,
+              "title": "سفید",
+              "code": null,
+              "hex_code": "#FFFFFF"
+            },
+            "themes": [
+              {
+                "value": {
+                  "id": 2,
+                  "title": "سفید",
+                  "nature": "color",
+                  "code": "#FFFFFF"
+                },
+                "label": "رنگ",
+                "type": "colored",
+                "is_main": true
+              }
+            ],
+            "pricing": {
+              "available_on_website": true,
+              "pricing_stock": {
+                "marketable_stock": 800,
+                "order_limit": 5,
+                "limit": null,
+                "skip_inventory": false,
+                "is_scheduled_stock": false,
+                "selling_price": 6980000,
+                "is_promotion": false
+              }
+            },
+            "seller": {
+              "id": 951484,
+              "name": "اچ ام لایت"
+            }
+          }
+        ],
+        "is_ad": false,
+        "category_id": 211
+      }
+    ],
+    "title": "کالاهای مشابه",
+    "type": "similar_products"
+  }
+}

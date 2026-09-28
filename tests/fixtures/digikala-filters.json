@@ -1,0 +1,127 @@
+{
+  "status": 200,
+  "data": {
+    "widgets": [
+      {
+        "type": "vertical_product_listing",
+        "data": {
+          "query_attributes": {
+            "category_ids": [
+              11
+            ]
+          },
+          "filters": {
+            "price": {
+              "title": "محدوده قیمت",
+              "options": {
+                "min": 4500,
+                "max": 183752345300
+              },
+              "type": "slider"
+            },
+            "brands": {
+              "type": "checkbox",
+              "title": "برند",
+              "top_options": [
+                {
+                  "id": 18,
+                  "title_fa": "سامسونگ",
+                  "title_en": "Samsung"
+                },
+                {
+                  "id": 1662,
+                  "title_fa": "شیائومی",
+                  "title_en": "Xiaomi"
+                },
+                {
+                  "id": 10,
+                  "title_fa": "اپل",
+                  "title_en": "Apple"
+                }
+              ],
+              "options": [
+                {
+                  "id": 21233,
+                  "title_fa": " گروه پژوهش صنعت مدرن",
+                  "title_en": "Modern industry research group"
+                },
+                {
+                  "id": 18187,
+                  "title_fa": "27",
+                  "title_en": "27"
+                },
+                {
+                  "id": 2933,
+                  "title_fa": "361 درجه",
+                  "title_en": "361 Degrees"
+                }
+              ]
+            },
+            "color_palettes": {
+              "type": "checkbox",
+              "title": "رنگ",
+              "options": [
+                {
+                  "id": 12,
+                  "title": "آبی"
+                },
+                {
+                  "id": 2,
+                  "title": "بنفش"
+                },
+                {
+                  "id": 3,
+                  "title": "زرد"
+                }
+              ]
+            },
+            "attribute_7291": {
+              "title": "قابلیت‌های مقاومتی",
+              "options": [
+                {
+                  "id": 31223,
+                  "title_fa": "مقاوم در برابر خط و خش",
+                  "title_en": "Scratch-resistant"
+                },
+                {
+                  "id": 31224,
+                  "title_fa": "مقاوم در برابر ضربه",
+                  "title_en": "Impact-resistant"
+                },
+                {
+                  "id": 31246,
+                  "title_fa": "مقاوم در برابر نفوذ گرد و غبار",
+                  "title_en": "Dust-resistant"
+                }
+              ],
+              "top_options": [
+                {
+                  "id": 31224,
+                  "title_fa": "مقاوم در برابر ضربه",
+                  "title_en": "Impact-resistant"
+                },
+                {
+                  "id": 31246,
+                  "title_fa": "مقاوم در برابر نفوذ گرد و غبار",
+                  "title_en": "Dust-resistant"
+                },
+                {
+                  "id": 31223,
+                  "title_fa": "مقاوم در برابر خط و خش",
+                  "title_en": "Scratch-resistant"
+                }
+              ],
+              "type": "checkbox"
+            }
+          },
+          "widgets": [],
+          "pager": {
+            "current_page": 1,
+            "total_pages": 1,
+            "total_items": 0
+          }
+        }
+      }
+    ]
+  }
+}

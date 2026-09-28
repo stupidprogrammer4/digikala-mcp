@@ -1,0 +1,76 @@
+{
+  "status": 200,
+  "data": [
+    {
+      "id": 84016750,
+      "status": "marketable",
+      "themes": [
+        {
+          "value": {
+            "variant_id": 84016750,
+            "id": 2,
+            "title": "سفید",
+            "code": "#FFFFFF",
+            "hexCode": "#FFFFFF",
+            "hex_code": "#FFFFFF",
+            "nature": "color"
+          },
+          "label": "رنگ",
+          "type": "colored",
+          "is_main": true
+        }
+      ],
+      "color": {
+        "id": 2,
+        "title": "سفید",
+        "hex_code": "#FFFFFF"
+      },
+      "price": {
+        "selling_price": 28500000,
+        "rrp_price": 280000000,
+        "order_limit": 5,
+        "is_incredible": false,
+        "is_promotion": true,
+        "is_locked_for_digiplus": false,
+        "bnpl_active": false,
+        "discount_percent": 90,
+        "badge": {
+          "title": "فروش ویژه",
+          "color": "#E6123D",
+          "icon": null
+        },
+        "is_digiplus_promotion": false,
+        "is_digiplus_early_access": false,
+        "is_application_incredible": false,
+        "is_lightening_deal": false,
+        "is_plus_early_access": false,
+        "min_order_limit": 1
+      },
+      "lead_time": 0,
+      "warranty": {
+        "id": 3,
+        "title_fa": "سرویس ویژه دیجی کالا: 7 روز تضمین بازگشت کالا",
+        "title_en": "سرویس ویژه دیجی کالا: 7 روز تضمین بازگشت کالا"
+      },
+      "seller": {
+        "id": 289366,
+        "title": "برزان",
+        "rating": {
+          "total_rate": 74,
+          "total_count": 38415,
+          "commitment": 99.9,
+          "no_return": 99.6,
+          "on_time_shipping": 99.7
+        },
+        "stars": 5,
+        "grade": {
+          "label": "عالی",
+          "color": "#00a049"
+        }
+      },
+      "shipment_methods": {
+        "description": "موجود در انبار دیجی‌کالا"
+      }
+    }
+  ]
+}
