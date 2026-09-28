@@ -1,15 +1,14 @@
 """Prepare bounded cart changes and execute each persisted plan at most once."""
 
-import asyncio
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from src.infra.cart_journal import CartJournal
-from src.infra.gateways.cart import CartGateway
+from src.infra.db.cart_journal import CartJournal
 from src.infra.http import GatewayError
-from src.models.cart import (
+from src.infra.http.gateways.cart import CartGateway
+from src.models.schemas.cart import (
     CartAction,
     CartChange,
     CartLimits,
@@ -45,7 +44,6 @@ class CartService:
         self.gateway_factory = gateway_factory
         self.journal = journal
         self.limits = limits
-        self._lock = asyncio.Lock()
 
     async def read(self) -> CartSnapshot:
         async with self.gateway_factory() as gateway:
@@ -160,33 +158,27 @@ class CartService:
         )
 
     async def prepare(self, change: CartChange) -> CartPlan:
-        async with self._lock:
-            with self.journal.locked() as db:
-                async with self.gateway_factory() as gateway:
-                    if self.journal.unresolved(db, gateway.connection_id):
-                        raise GatewayError(
-                            "cart_outcome_unknown", "Resolve the previous operation first"
-                        )
-                    cart = await gateway.read()
-                    plan = await self._plan(gateway, cart, change)
-                    self.journal.put(
-                        db,
-                        {
-                            "connection_id": gateway.connection_id,
-                            "state": "prepared",
-                            "plan": plan.model_dump(mode="json"),
-                            "before": snapshot_data(cart),
-                            "change": change.model_dump(mode="json"),
-                        },
-                    )
-                    return plan
-
-    def preview(self, plan_id: str, action: CartAction) -> CartPlan:
-        with self.journal.locked() as db:
-            plan = CartPlan.model_validate(self.journal.get(db, plan_id)["plan"])
-            if plan.action != action:
-                raise GatewayError("wrong_action", "Plan belongs to a different cart operation")
+        async with self.gateway_factory() as gateway:
+            if await self.journal.unresolved(gateway.connection_id):
+                raise GatewayError("cart_outcome_unknown", "Resolve the previous operation first")
+            cart = await gateway.read()
+            plan = await self._plan(gateway, cart, change)
+            await self.journal.insert(
+                {
+                    "connection_id": gateway.connection_id,
+                    "state": "prepared",
+                    "plan": plan.model_dump(mode="json"),
+                    "before": snapshot_data(cart),
+                    "change": change.model_dump(mode="json"),
+                }
+            )
             return plan
+
+    async def preview(self, plan_id: str, action: CartAction) -> CartPlan:
+        plan = CartPlan.model_validate((await self.journal.get(plan_id))["plan"])
+        if plan.action != action:
+            raise GatewayError("wrong_action", "Plan belongs to a different cart operation")
+        return plan
 
     @staticmethod
     def _matches(plan: CartPlan, before: CartSnapshot, after: CartSnapshot) -> bool:
@@ -216,62 +208,61 @@ class CartService:
         )
 
     async def execute(self, plan_id: str, action: CartAction) -> CartOperation:
-        async with self._lock:
-            with self.journal.locked() as db:
-                record = self.journal.get(db, plan_id)
-                plan = CartPlan.model_validate(record["plan"])
-                if plan.action != action:
-                    raise GatewayError("wrong_action", "Plan belongs to a different cart operation")
-                async with self.gateway_factory() as gateway:
-                    if record["connection_id"] != gateway.connection_id:
-                        raise GatewayError(
-                            "connection_changed", "Prepare again for the connected account"
-                        )
-                    if record["state"] in {"applied", "rejected"}:
-                        return CartOperation.model_validate(record["result"])
-                    if record["state"] == "prepared":
-                        if self.journal.unresolved(db, gateway.connection_id):
-                            raise GatewayError(
-                                "cart_outcome_unknown", "Resolve the previous operation first"
-                            )
-                        try:
-                            if datetime.now(timezone.utc) >= plan.expires_at:
-                                raise GatewayError("plan_expired", "Prepare a fresh cart change")
-                            before = await gateway.read()
-                            if not same_cart(before, CartSnapshot.model_validate(record["before"])):
-                                raise GatewayError("cart_changed", "Cart changed; prepare again")
-                            fresh = await self._plan(
-                                gateway, before, CartChange.model_validate(record["change"])
-                            )
-                            ignored = {"plan_id", "expires_at"}
-                            if fresh.model_dump(exclude=ignored) != plan.model_dump(
-                                exclude=ignored
-                            ):
-                                raise GatewayError(
-                                    "offer_or_limits_changed",
-                                    "Offer or limits changed; prepare again",
-                                )
-                        except GatewayError as exc:
-                            result = CartOperation(
-                                plan_id=plan_id, state="rejected", reason=exc.error.code
-                            )
-                            record.update(
-                                state="rejected",
-                                result=result.model_dump(mode="json", round_trip=True),
-                            )
-                            self.journal.put(db, record)
-                            return result
-                        # Commit before writing so a crash or timeout cannot trigger a replay.
-                        record["state"] = "executing"
-                        self.journal.put(db, record)
-                        try:
-                            await gateway.mutate(plan)
-                        except GatewayError:
-                            # The store might have applied it; read back before deciding.
-                            pass
-                    result = await self._reconcile(gateway, record)
-                    record.update(
-                        state=result.state, result=result.model_dump(mode="json", round_trip=True)
+        record = await self.journal.get(plan_id)
+        plan = CartPlan.model_validate(record["plan"])
+        if plan.action != action:
+            raise GatewayError("wrong_action", "Plan belongs to a different cart operation")
+        async with self.gateway_factory() as gateway:
+            if record["connection_id"] != gateway.connection_id:
+                raise GatewayError("connection_changed", "Prepare again for the connected account")
+            if record["state"] in {"applied", "rejected"}:
+                return CartOperation.model_validate(record["result"])
+            if record["state"] == "prepared":
+                # Commit exclusive execution ownership via a unique account constraint and CAS.
+                claimed = await self.journal.transition(record, "prepared", "executing")
+                if claimed is None:
+                    return await self._existing(plan_id)
+                record = claimed
+                try:
+                    if datetime.now(timezone.utc) >= plan.expires_at:
+                        raise GatewayError("plan_expired", "Prepare a fresh cart change")
+                    before = await gateway.read()
+                    if not same_cart(before, CartSnapshot.model_validate(record["before"])):
+                        raise GatewayError("cart_changed", "Cart changed; prepare again")
+                    fresh = await self._plan(
+                        gateway, before, CartChange.model_validate(record["change"])
                     )
-                    self.journal.put(db, record)
-                    return result
+                    ignored = {"plan_id", "expires_at"}
+                    if fresh.model_dump(exclude=ignored) != plan.model_dump(exclude=ignored):
+                        raise GatewayError(
+                            "offer_or_limits_changed", "Offer or limits changed; prepare again"
+                        )
+                except GatewayError as exc:
+                    result = CartOperation(plan_id=plan_id, state="rejected", reason=exc.error.code)
+                    return await self._finish(record, result)
+                try:
+                    await gateway.mutate(plan)
+                except GatewayError:
+                    pass  # The upstream may have applied a timed-out request.
+            elif record["state"] == "executing":
+                # The owner may still be sending a request. Never reconcile or release it here.
+                return CartOperation(
+                    plan_id=plan_id,
+                    state="uncertain",
+                    reason="execution_in_progress_or_interrupted",
+                )
+            result = await self._reconcile(gateway, record)
+            return await self._finish(record, result)
+
+    async def _existing(self, plan_id: str) -> CartOperation:
+        record = await self.journal.get(plan_id)
+        if record.get("result") is not None:
+            return CartOperation.model_validate(record["result"])
+        return CartOperation(
+            plan_id=plan_id, state="uncertain", reason="execution_in_progress_or_interrupted"
+        )
+
+    async def _finish(self, record: dict, result: CartOperation) -> CartOperation:
+        record["result"] = result.model_dump(mode="json", round_trip=True)
+        saved = await self.journal.transition(record, record["state"], result.state)
+        return result if saved else await self._existing(result.plan_id)

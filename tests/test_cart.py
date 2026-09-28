@@ -1,17 +1,16 @@
 """Cart policy and durable write safety. All products, account IDs and carts are synthetic."""
 
 import asyncio
-from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from src.app.cart import CartService
-from src.infra.cart_journal import CartJournal
-from src.infra.gateways.cart import CartGateway
+from src.infra.db.exceptions import UnresolvedOperation
 from src.infra.http import GatewayError
-from src.models import Availability, Offer
-from src.models.cart import CartChange, CartItem, CartLimits, CartOffer, CartSnapshot
+from src.infra.http.gateways.cart import CartGateway
+from src.models.schemas import Availability, Offer
+from src.models.schemas.cart import CartChange, CartItem, CartLimits, CartOffer, CartSnapshot
 
 
 def offer(price: int | None = 100):
@@ -70,20 +69,6 @@ class FakeCart(CartGateway):
             self.cart.items.clear()
         if self.failure == "after":
             raise GatewayError("timeout", "test")
-
-
-@pytest.fixture
-def cart_setup(tmp_path):
-    gateway = FakeCart()
-
-    @asynccontextmanager
-    async def open_gateway():
-        yield gateway
-
-    service = CartService(
-        open_gateway, CartJournal(tmp_path), CartLimits(max_total_rial=300, max_items=3)
-    )
-    return service, gateway
 
 
 def add():
@@ -166,12 +151,11 @@ async def test_revalidation_rejects_stale_plans(cart_setup, change):
     elif change == "seller_limit":
         gateway.min_quantity = 2
     else:
-        with service.journal.locked() as db:
-            record = service.journal.get(db, plan.plan_id)
-            record["plan"]["expires_at"] = (
-                datetime.now(timezone.utc) - timedelta(seconds=1)
-            ).isoformat()
-            service.journal.put(db, record)
+        record = await service.journal.get(plan.plan_id)
+        record["plan"]["expires_at"] = (
+            datetime.now(timezone.utc) - timedelta(seconds=1)
+        ).isoformat()
+        await service.journal.transition(record, "prepared", "prepared")
     result = await service.execute(plan.plan_id, "add")
     assert result.state == "rejected"
     assert gateway.writes == []
@@ -194,7 +178,7 @@ async def test_uncertain_write_blocks_other_plans_and_never_retries(cart_setup):
     gateway.failure = "before"
     assert (await service.execute(first.plan_id, "add")).state == "uncertain"
     assert (await service.execute(first.plan_id, "add")).state == "uncertain"
-    with pytest.raises(GatewayError, match="previous operation"):
+    with pytest.raises(UnresolvedOperation, match="previous operation"):
         await service.execute(second.plan_id, "add")
     with pytest.raises(GatewayError, match="previous operation"):
         await service.prepare(add())
@@ -221,7 +205,8 @@ async def test_concurrent_executions_send_one_write(cart_setup):
     results = await asyncio.gather(
         service.execute(plan.plan_id, "add"), service.execute(plan.plan_id, "add")
     )
-    assert all(result.state == "applied" for result in results)
+    assert any(result.state == "applied" for result in results)
+    assert all(result.state in {"applied", "uncertain"} for result in results)
     assert gateway.writes == ["add"]
 
 
@@ -233,41 +218,40 @@ async def test_unknown_existing_price_blocks_increase(cart_setup):
     assert gateway.writes == []
 
 
-def test_separate_process_locks_conflict(tmp_path):
-    first, second = CartJournal(tmp_path), CartJournal(tmp_path)
-    with first.locked():
-        with pytest.raises(GatewayError, match="Another local process"):
-            with second.locked():
-                pytest.fail("Second journal should not acquire the lock")
-
-
 async def test_cart_tools_over_mcp(cart_setup):
-    from mcp import Client
+    from fastmcp import Client
 
     from src.server import create_server
 
     service, gateway = cart_setup
     async with Client(create_server(cart_service=service)) as client:
-        limits = await client.call_tool("get_cart_limits")
+        limits = await client.call_tool("get_cart_limits", raise_on_error=False)
+        assert limits.structured_content is not None
         assert limits.structured_content["limits"]["max_items"] == 3
-        cart = await client.call_tool("read_cart")
+        cart = await client.call_tool("read_cart", raise_on_error=False)
+        assert cart.structured_content is not None
         assert cart.structured_content["total_items"] == 0
         for change, tool in [
             ({"action": "add", "product_id": "1", "offer_id": "10"}, "add_to_cart"),
             ({"action": "update", "cart_item_id": 5, "quantity": 2}, "update_cart_item"),
             ({"action": "remove", "cart_item_id": 5}, "remove_from_cart"),
         ]:
-            preview = await client.call_tool("prepare_cart_change", {"change": change})
+            preview = await client.call_tool(
+                "prepare_cart_change", {"change": change}, raise_on_error=False
+            )
             assert not preview.is_error
+            assert preview.structured_content is not None
             result = await client.call_tool(
-                tool, {"plan_id": preview.structured_content["plan_id"]}
+                tool, {"plan_id": preview.structured_content["plan_id"]}, raise_on_error=False
             )
             assert not result.is_error
+            assert result.structured_content is not None
             assert result.structured_content["state"] == "applied"
         assert gateway.writes == ["add", "update", "remove"]
         invalid = await client.call_tool(
             "prepare_cart_change",
             {"change": {"action": "update", "cart_item_id": 5, "quantity": 0}},
+            raise_on_error=False,
         )
         assert invalid.is_error
 
