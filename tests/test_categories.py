@@ -4,7 +4,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from src.models import CategoryQuery, Market, SearchQuery
+from src.models.schemas import CategoryQuery, Market, SearchQuery
 
 
 async def test_category_tree_deduplicates_and_preserves_hierarchy(payload, catalog_factory):

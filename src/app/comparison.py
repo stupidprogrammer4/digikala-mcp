@@ -3,7 +3,7 @@
 from itertools import combinations
 from typing import Literal
 
-from src.models.comparison import (
+from src.models.schemas.comparison import (
     ComparisonItem,
     ComparisonRequest,
     ComparisonResponse,
@@ -11,8 +11,8 @@ from src.models.comparison import (
     OfferPairComparison,
     OfferSelection,
 )
-from src.models.market import Market, MarketError
-from src.models.product import ProductResult
+from src.models.schemas.market import Market, MarketError
+from src.models.schemas.product import Offer, ProductResult
 
 
 def select_offer(selection: OfferSelection, result: ProductResult) -> ComparisonItem:
@@ -33,7 +33,10 @@ def select_offer(selection: OfferSelection, result: ProductResult) -> Comparison
         location=product.location,
         location_is_default=product.location_is_default,
     )
-    matches = [offer for offer in product.offers if offer.offer_id == selection.offer_id]
+    offers: dict[str | None, list[Offer]] = {}
+    for offer in product.offers:
+        offers.setdefault(offer.offer_id, []).append(offer)
+    matches = offers.get(selection.offer_id, [])
     if len(matches) != 1:
         item.error = MarketError(
             code="offer_not_found" if not matches else "ambiguous_offer",
@@ -64,6 +67,19 @@ def observed_fields(item: ComparisonItem) -> dict[str, list[str]]:
         )
         if item.offer.warranty:
             fields["warranty"] = [item.offer.warranty]
+        for key in (
+            "seller_id",
+            "seller_name",
+            "lead_time_days",
+            "shipment_description",
+            "order_limit",
+        ):
+            value = getattr(item.offer, key)
+            if value is not None:
+                fields[key] = [str(value)]
+        if item.offer.seller_rating is not None:
+            for key, value in item.offer.seller_rating.model_dump(exclude_none=True).items():
+                fields[f"seller_rating.{key}"] = [str(value)]
     return fields
 
 

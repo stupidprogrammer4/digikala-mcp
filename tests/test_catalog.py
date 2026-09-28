@@ -2,7 +2,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from src.models import Market, SearchQuery
+from src.models.schemas import Market, SearchQuery
 
 
 async def test_digikala_search_mapping_and_request(payload, catalog_factory):

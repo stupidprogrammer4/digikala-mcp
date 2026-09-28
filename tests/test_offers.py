@@ -6,7 +6,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from src.models import OfferListResult
+from src.models.schemas import OfferListResult
 
 
 async def test_offers_preserve_sellers_variants_and_observation(
@@ -70,7 +70,7 @@ async def test_out_of_stock_offers_are_visible(payload, catalog_factory):
     assert result.offers[0].availability == "unavailable"
 
 
-async def test_every_listing_refreshes_price(payload, catalog_factory):
+async def test_listing_reuses_observation_within_ttl(payload, catalog_factory):
     calls = 0
 
     def handler(request):
@@ -83,11 +83,11 @@ async def test_every_listing_refreshes_price(payload, catalog_factory):
     service = catalog_factory(handler)
     first = await service.list_offers("22672438")
     second = await service.list_offers("22672438")
-    assert calls == 2
+    assert calls == 1
     assert first.offers[0].price_rial == 28000000
-    assert second.offers[0].price_rial == 28000100
+    assert second.offers[0].price_rial == 28000000
     assert first.observed_at is not None and second.observed_at is not None
-    assert first.observed_at <= second.observed_at
+    assert first.observed_at == second.observed_at
 
 
 @pytest.mark.parametrize("status,code", [(404, "not_found"), (429, "rate_limited")])

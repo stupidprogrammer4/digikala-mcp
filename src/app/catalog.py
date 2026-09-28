@@ -3,9 +3,10 @@ import asyncio
 from pydantic import TypeAdapter
 
 from src.app.comparison import build_comparison
-from src.infra.gateways.base import ABCMarketGateway
+from src.app.products import ProductService
 from src.infra.http import GatewayError
-from src.models import (
+from src.infra.http.gateways.base import ABCMarketGateway
+from src.models.schemas import (
     AutocompleteResult,
     CategoryListResult,
     CategoryQuery,
@@ -21,12 +22,14 @@ from src.models import (
     SearchResponse,
     SearchResult,
 )
-from src.models.comparison import ComparisonRequest, ComparisonResponse
+from src.models.schemas.comparison import ComparisonRequest, ComparisonResponse
+from src.models.schemas.trends import TrendSnapshot
 
 
 class CatalogService:
     def __init__(self, gateways: list[ABCMarketGateway]):
         self.gateways = {gateway.market: gateway for gateway in gateways}
+        self.products = ProductService(self.gateways[Market.DIGIKALA])
 
     def list_markets(self) -> MarketList:
         return MarketList.model_validate(
@@ -41,11 +44,36 @@ class CatalogService:
                             "autocomplete": "verified"
                             if gateway.supports_autocomplete
                             else "unknown",
+                            **{
+                                capability: "verified"
+                                if gateway.supports_product_content
+                                else "unknown"
+                                for capability in (
+                                    "product_variants",
+                                    "product_variant_types",
+                                    "product_reviews",
+                                    "product_questions",
+                                    "product_ratings",
+                                    "product_sellers",
+                                    "seller_comparison",
+                                    "product_recommendations",
+                                )
+                            },
+                            **{
+                                capability: "verified" if gateway.supports_research else "unknown"
+                                for capability in (
+                                    "category_filters",
+                                    "product_media",
+                                    "product_batch",
+                                    "product_comparison",
+                                )
+                            },
+                            "product_price_history": "unknown",
                             "cart": "unknown",
                             "cart_read": "verified",
                             "shipping_quote": "unknown",
                         },
-                        "last_verified": "2026-09-27",
+                        "last_verified": "2026-09-28",
                         "health_checked_now": False,
                         "location_required_by_api": False,
                     }
@@ -53,6 +81,13 @@ class CatalogService:
                 ]
             }
         )
+
+    async def trends(self) -> TrendSnapshot:
+        try:
+            result = await self.gateways[Market.DIGIKALA].trends()
+            return result
+        except GatewayError as exc:
+            return TrendSnapshot(error=exc.error)
 
     async def search(
         self,
@@ -192,7 +227,7 @@ class CatalogService:
         return result
 
     async def compare_offers(self, request: ComparisonRequest) -> ComparisonResponse:
-        # Refresh each distinct product once per comparison, even for multiple sellers.
+        # Resolve each distinct product once, sharing the gateway TTL cache.
         keys = list(dict.fromkeys((s.market, s.product_id) for s in request.selections))
         products = await asyncio.gather(
             *(self.get_product(market, product_id, request.location) for market, product_id in keys)

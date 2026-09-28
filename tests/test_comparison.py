@@ -5,8 +5,8 @@ import pytest
 from pydantic import ValidationError
 
 from src.app.comparison import compare_pair
-from src.models import Market, Offer
-from src.models.comparison import ComparisonItem, ComparisonRequest, OfferSelection
+from src.models.schemas import Market, Offer
+from src.models.schemas.comparison import ComparisonItem, ComparisonRequest, OfferSelection
 
 
 def selection(offer_id: str, expected_price_rial: int | None = None) -> OfferSelection:
@@ -101,7 +101,7 @@ async def test_failures_are_isolated_and_products_fetch_concurrently(
     assert [p.status for p in result.pairs] == ["incomplete", "incomplete", "compared"]
 
 
-async def test_each_call_refreshes_price(comparison_payload, catalog_factory):
+async def test_comparison_refreshes_price_after_cache_expiry(comparison_payload, catalog_factory):
     calls = 0
 
     def handler(request):
@@ -113,7 +113,12 @@ async def test_each_call_refreshes_price(comparison_payload, catalog_factory):
 
     service = catalog_factory(handler)
     request = ComparisonRequest(selections=[selection("84016750", 27999900), selection("84016751")])
+    now = [0.0]
+    service.gateways[Market.DIGIKALA].cache.clock = lambda: now[0]
     before = await service.compare_offers(request)
+    cached = await service.compare_offers(request)
+    assert calls == 1 and cached.items[0].price_changed is False
+    now[0] = 60.0
     after = await service.compare_offers(request)
     assert calls == 2
     assert before.items[0].price_changed is False
