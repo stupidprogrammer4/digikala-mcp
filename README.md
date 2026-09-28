@@ -1,3 +1,11 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/branding/banner-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/branding/banner-light.png">
+    <img src="assets/branding/banner-light.png" alt="digikala-mcp by Pouya" width="960">
+  </picture>
+</p>
+
 # digikala-mcp
 
 An MCP server for Digikala product discovery, product research, offer comparison,
