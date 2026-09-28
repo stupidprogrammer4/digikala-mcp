@@ -2,13 +2,21 @@
 
 from abc import ABC, abstractmethod
 
-from src.infra.gateways.digikala import parse_offer
-from src.infra.gateways.parsing import checked_schema, items
 from src.infra.http import GatewayError, HTTPConnection
-from src.models.cart import CartItem, CartOffer, CartPlan, CartSnapshot
+from src.infra.http.gateways.digikala import parse_offer
+from src.infra.http.gateways.parsing import checked_schema, items
+from src.models.schemas.cart import CartItem, CartOffer, CartPlan, CartSnapshot
 
 CART_PATH = "/checkout/v1/carts/items"
 CART_HEADERS = {"x-site": "DIGIKALA", "x-source": "WEB"}
+
+
+def insurance_charge(value: object) -> bool:
+    if value is None or value is False:
+        return False
+    if isinstance(value, dict) and set(value) == {"amount", "rrp_price", "discount"}:
+        return any(type(amount) is not int or amount != 0 for amount in value.values())
+    return bool(value)
 
 
 class CartGateway(ABC):
@@ -48,7 +56,9 @@ class DigikalaCartGateway(CartGateway):
                 item for package in items(data["packages"]) for item in items(package["cart_items"])
             ]
         parsed = []
-        extras = bool(cart.get("insurance") or cart.get("temporary_plus_subscription"))
+        extras = insurance_charge(cart.get("insurance")) or bool(
+            cart.get("temporary_plus_subscription")
+        )
         for raw in items(raw_items):
             variant = raw["variant"]
             offer = parse_offer(variant)

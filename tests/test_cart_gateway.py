@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 import httpx
 import pytest
 
-from src.infra.gateways.cart import CART_PATH, DigikalaCartGateway
 from src.infra.http import GatewayError, HTTPConnection
-from src.models import Offer
-from src.models.cart import CartPlan
+from src.infra.http.gateways.cart import CART_PATH, DigikalaCartGateway
+from src.models.schemas import Offer
+from src.models.schemas.cart import CartPlan
 
 
 def cart_body(quantity=2):
@@ -155,3 +155,30 @@ async def test_offer_is_exact_and_carries_seller_quantity_limits(payload):
         assert chosen.offer.price_rial == 27999900
         with pytest.raises(GatewayError):
             await gateway.get_offer("22672438", "999")
+
+
+@pytest.mark.parametrize("amount,expected", [(0, False), (100, True)])
+async def test_zero_insurance_totals_are_not_an_added_cart_service(amount, expected):
+    def handle(request):
+        if request.url.path.endswith("init/"):
+            return httpx.Response(200, json={"status": 200, "data": {"is_logged_in": True}})
+        return httpx.Response(
+            200,
+            json={
+                "status": 200,
+                "success": True,
+                "data": {
+                    "cart": {
+                        "items_count": 0,
+                        "insurance": {"amount": amount, "rrp_price": amount, "discount": 0},
+                    },
+                    "packages": [],
+                },
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+        result = await DigikalaCartGateway(
+            HTTPConnection(client, "https://api.digikala.com"), "test"
+        ).read()
+    assert result.has_unsupported_extras is expected
