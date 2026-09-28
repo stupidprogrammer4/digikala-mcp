@@ -13,7 +13,7 @@ from src.infra.http.auth import check_login
 from src.infra.http.session import HEADERS, SessionStore
 
 
-def main() -> int:
+def account_cli() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["login", "disconnect"])
     args = parser.parse_args()
@@ -46,7 +46,3 @@ def main() -> int:
     except (KeyboardInterrupt, EOFError):
         print("Cancelled.", file=sys.stderr)
         return 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

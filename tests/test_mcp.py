@@ -1,5 +1,6 @@
 import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import httpx
 from fastmcp import Client
@@ -202,7 +203,11 @@ async def test_all_tools_through_mcp_client(payload, comparison_payload, catalog
 
 
 async def test_stdio_entrypoint_without_network():
-    async with Client(StdioTransport(command=sys.executable, args=["-m", "src.server"])) as client:
+    transport = StdioTransport(
+        command=str(Path(sys.executable).with_name("fastmcp")),
+        args=["run", "src/server.py:create_server", "--no-banner"],
+    )
+    async with Client(transport) as client:
         result = await client.call_tool("list_markets", raise_on_error=False)
         assert not result.is_error
         assert result.structured_content is not None

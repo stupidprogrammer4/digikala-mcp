@@ -56,11 +56,3 @@ def create_server(
     register_cart_tools(server)
     register_account_tools(server)
     return server
-
-
-def main():
-    create_server().run(transport="stdio", show_banner=False)
-
-
-if __name__ == "__main__":
-    main()

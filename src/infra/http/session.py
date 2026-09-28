@@ -69,7 +69,7 @@ class SessionStore:
         try:
             raw = self._backend().get_password(SERVICE, ENTRY)
             if raw is None:
-                raise GatewayError("not_connected", "Run python -m src.account login locally first")
+                raise GatewayError("not_connected", "Run digikala-account login locally first")
             data = json.loads(raw)
             cookies = httpx.Cookies()
             for c in data["cookies"]:
