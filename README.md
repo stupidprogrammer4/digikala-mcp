@@ -17,7 +17,8 @@ Configure your MCP client to start the server over stdio:
 {
   "mcpServers": {
     "digikala": {
-      "command": "/absolute/path/to/digikala-mcp/.venv/bin/digikala-mcp"
+      "command": "/absolute/path/to/digikala-mcp/.venv/bin/fastmcp",
+      "args": ["run", "/absolute/path/to/digikala-mcp/src/server.py:create_server", "--no-banner"]
     }
   }
 }
@@ -26,17 +27,17 @@ Configure your MCP client to start the server over stdio:
 Public catalog tools do not require an account. For cart operations, connect your account in an interactive terminal:
 
 ```sh
-.venv/bin/python -m src.account login
+.venv/bin/digikala-account login
 ```
 
-The account command stores the session in the operating system's keyring. Use `.venv/bin/python -m src.account disconnect` to remove the saved session. Password login is supported; accounts requiring OTP or phone confirmation need that challenge resolved separately.
+The account command stores the session in the operating system's keyring. Use `.venv/bin/digikala-account disconnect` to remove the saved session. Password login is supported; accounts requiring OTP or phone confirmation need that challenge resolved separately.
 
 Cart writes require both `INCART_CART_MAX_TOTAL_RIAL` and `INCART_CART_MAX_ITEMS` in the server environment. These set the merchandise budget in rials and the total number of units. `DATABASE_URL` configures PostgreSQL persistence for cart plans and operations. Public catalog reads and account login do not require a database. Environment variables must be injected by the host; `.env` is not loaded automatically. The `INCART_` limit names are retained for compatibility.
 
-Provision the configured database once before cart writes:
+Apply versioned database migrations before cart writes:
 
 ```sh
-.venv/bin/python -m src.infra.db
+.venv/bin/alembic upgrade head
 ```
 
 ## Architecture
@@ -49,7 +50,9 @@ flowchart TD
     App --> Gateways[infra: gateway contracts and Digikala adapters]
     Gateways --> HTTP[HTTPConnection / httpx]
     HTTP --> Digikala[Digikala APIs]
-    App --> Journal[db: PostgreSQL operation journal]
+    App --> Repository[db: cart journal repository]
+    Repository --> Connection[db: DBConnection / SQLModel sessions]
+    Connection --> PostgreSQL[PostgreSQL]
     Gateways --> Cache[cache: 60-second public observations]
     Bootstrap[bootstrap.py: composition and resource lifetime] -.-> Server
     Bootstrap -.-> App
@@ -78,12 +81,27 @@ src/
   infra/
     http/                 Fixed-origin requests, authentication, and market gateways
       gateways/           Public catalog and authenticated cart adapters
-    db/                   SQLModel repositories, sessions, exceptions, and schema provisioning
+    db/
+      connection.py       Lazy PostgreSQL engine, pool, and SQLModel session factory
+      repositories/       Typed queries and versioned cart state transitions
+      exceptions.py       Independent database errors
+      errors.py           Sanitized driver-error translation
     cache/                Bounded TTL cache with shared asynchronous requests
   config/                 Trusted local limits and database connection configuration
-  bootstrap.py            Dishka providers and application resource ownership
-  server.py               MCP entry point and lifespan
+  providers/
+    http.py               Public HTTP client and connection
+    cache.py              Cache lifetime, finalized before the HTTP client
+    gateways.py           Public gateway and authenticated gateway factories
+    database.py           Database pool, scoped sessions, repositories, and commit boundaries
+    catalog.py            Catalog and product services
+    cart.py               Cart planning and replacement services
+    accounts.py           Login and in-memory account sessions
+    overrides.py          Explicit service overrides for embedded use and tests
+  bootstrap.py            Provider graph composition
+  server.py               FastMCP factory and lifespan; launched by the FastMCP CLI
   account.py              Local interactive account connection and disconnection
+migrations/               Alembic environment and versioned PostgreSQL schema changes
+alembic.ini               Migration configuration; connection comes from DATABASE_URL
 tests/                    Unit, contract, lifecycle, and MCP integration tests
 ```
 
@@ -91,9 +109,16 @@ tests/                    Unit, contract, lifecycle, and MCP integration tests
 
 `create_server` returns a FastMCP 4 server. Its lifespan creates a Dishka container,
 resolves application-scoped services before accepting requests, and closes the
-container at shutdown. `ApplicationProvider` constructs the public HTTP client,
-cache, gateways, catalog/product services, PostgreSQL journal and cart/account
-services. The cart service and account replacer share one journal dependency.
+container at shutdown. Providers under `providers/` own their respective resources:
+HTTP, cache, gateways, database, catalog, cart, and accounts. `bootstrap.py` only
+composes that graph. The cache depends on the public HTTP client so its pending
+requests finish before that client closes.
+
+Cart services share an application-scoped `JournalFactory`.
+Each database phase opens a fresh Dishka `REQUEST` scope beneath the application
+container. `AsyncSession` and `CartJournal` are shared within that scope and discarded
+when it closes. Concurrent phases receive different sessions, including phases in
+separate tasks serving the same account.
 
 Tools declare their service using `Depends(from_dishka(ServiceType))`.
 `tools/dependencies.py` bridges FastMCP's dependency contexts to Dishka request
@@ -144,31 +169,39 @@ Session cookies live in the OS keyring. Plans and operation results live in the 
 JSONB payload, revision, integrity checks and partial unique index. Public MCP schemas
 remain in `models/schemas`; table instances are not returned by tools.
 
-`infra/db/session.py` owns a lazy async engine and a bounded connection pool. Each
-repository operation opens its own SQLModel `AsyncSession` and transaction, commits on
-success, rolls back on errors or cancellation, and returns the connection to the pool.
-Sessions are never shared between concurrent tasks or held across storefront requests.
-Dishka provides one application-scoped `Database` to both cart paths and disposes the pool
-at shutdown. Missing database configuration does not prevent public catalog usage.
+`infra/db/connection.py` owns the lazy engine, bounded pool, and SQLModel session
+factory. Dishka provides one application-scoped `DBConnection` and disposes it at
+shutdown. Missing database configuration does not prevent public catalog usage.
 
-`infra/db/cart_journal.py` contains only persistence operations. Inserts use mapped rows;
-lookups and versioned updates use SQLModel/SQLAlchemy expressions. A conditional update
-checks the operation ID, account, state and revision in one statement. The database unique
-index coordinates executing/uncertain operations across processes without an application lock.
+`infra/db/repositories/cart_journal.py` receives an `AsyncSession` through Dishka.
+Its methods execute queries and flush writes; they never create or close sessions,
+commit, or roll back. `providers/database.py` supplies the repository and session in
+short scopes. Application services enter the injected journal factory around a database
+phase. The factory commits on successful exit, rolls back on errors or cancellation,
+and lets Dishka close the session. No unit-of-work or custom transaction class is used.
 
-`infra/db/exceptions.py` defines database configuration, availability, integrity, missing
-operation and conflict errors. Driver messages and query parameters are removed at the
-session boundary. The repository translates known uniqueness constraints into operation
-conflicts; `tools/errors.py` translates database errors into safe MCP errors. Database
-persistence imports neither HTTP gateway errors nor cache implementations. HTTP failures
-have their own exception module under `infra/http`. A persistence failure after a remote
-write is not reported as a rejected cart change; the journal continues to block replay.
+The execution-claim scope commits before the caller mutates the storefront cart.
+The outcome is persisted in a separate scope afterward. No database session stays
+open across storefront HTTP requests. A conditional update checks the
+operation ID, account, state and revision in one SQL statement. The partial unique
+index coordinates unresolved operations across processes without an application lock.
 
-`infra/db/schema.py` provisions registered SQLModel metadata explicitly. The table layout
-is compatible with the previous PostgreSQL journal, so this rewrite does not require
-rewriting existing rows. Provisioning does not drop tables, run on requests, or perform
-schema migrations. `DATABASE_URL` accepts PostgreSQL URLs, including the explicit
-`postgresql+psycopg://` driver form; existing libpq connection strings also remain supported.
+`infra/db/exceptions.py` defines independent configuration, availability, integrity
+and operation errors. `infra/db/errors.py` strips driver messages and query parameters
+at the database boundary. The provider translates recognized cart uniqueness
+constraints into operation conflicts; `tools/errors.py` translates database errors
+into safe MCP errors. Persistence imports neither HTTP errors nor cache code. A
+persistence failure after a remote write is not reported as a rejected cart change;
+the journal continues to block replay.
+
+Alembic owns schema changes in `migrations/`; the application contains no `main`
+function or `__main__.py`. FastMCP's CLI loads `server.py:create_server` directly.
+Migration SQL is versioned separately from current SQLModel table definitions; request
+handlers never create or migrate tables. Fresh databases use `alembic upgrade head`.
+An existing journal whose schema matches baseline `0001_cart_journal` can be adopted
+with `alembic stamp 0001_cart_journal`, followed by `alembic upgrade head`; stamping
+records the baseline without changing existing rows. `DATABASE_URL` accepts PostgreSQL
+URLs, including `postgresql+psycopg://`, and existing libpq connection strings.
 
 ## Architectural boundaries
 
