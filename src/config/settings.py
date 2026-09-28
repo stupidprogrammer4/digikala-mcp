@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from src.models.cart import CartLimits
+from src.models.schemas.cart import CartLimits
 
 
 def cart_limits() -> CartLimits | None:
@@ -18,3 +18,7 @@ def cart_limits() -> CartLimits | None:
 
 def state_directory() -> Path:
     return Path(os.environ.get("INCART_STATE_DIR", str(Path.home() / ".local/share/incart-mcp")))
+
+
+def database_url() -> str | None:
+    return os.environ.get("DATABASE_URL")
