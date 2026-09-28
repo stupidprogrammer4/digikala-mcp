@@ -5,7 +5,7 @@ from contextlib import AbstractAsyncContextManager
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from src.infra.db.cart_journal import CartJournal
+from src.app.dependencies import JournalFactory
 from src.infra.http import GatewayError
 from src.infra.http.gateways.cart import CartGateway
 from src.models.schemas.cart import (
@@ -39,7 +39,10 @@ def exceeds(cart: CartSnapshot, limits: CartLimits | None) -> bool | None:
 
 class CartService:
     def __init__(
-        self, gateway_factory: CartGatewayFactory, journal: CartJournal, limits: CartLimits | None
+        self,
+        gateway_factory: CartGatewayFactory,
+        journal: JournalFactory,
+        limits: CartLimits | None,
     ):
         self.gateway_factory = gateway_factory
         self.journal = journal
@@ -159,23 +162,27 @@ class CartService:
 
     async def prepare(self, change: CartChange) -> CartPlan:
         async with self.gateway_factory() as gateway:
-            if await self.journal.unresolved(gateway.connection_id):
+            async with self.journal() as journal:
+                unresolved = await journal.unresolved(gateway.connection_id)
+            if unresolved:
                 raise GatewayError("cart_outcome_unknown", "Resolve the previous operation first")
             cart = await gateway.read()
             plan = await self._plan(gateway, cart, change)
-            await self.journal.insert(
-                {
-                    "connection_id": gateway.connection_id,
-                    "state": "prepared",
-                    "plan": plan.model_dump(mode="json"),
-                    "before": snapshot_data(cart),
-                    "change": change.model_dump(mode="json"),
-                }
-            )
+            async with self.journal() as journal:
+                await journal.insert(
+                    {
+                        "connection_id": gateway.connection_id,
+                        "state": "prepared",
+                        "plan": plan.model_dump(mode="json"),
+                        "before": snapshot_data(cart),
+                        "change": change.model_dump(mode="json"),
+                    }
+                )
             return plan
 
     async def preview(self, plan_id: str, action: CartAction) -> CartPlan:
-        plan = CartPlan.model_validate((await self.journal.get(plan_id))["plan"])
+        async with self.journal() as journal:
+            plan = CartPlan.model_validate((await journal.get(plan_id))["plan"])
         if plan.action != action:
             raise GatewayError("wrong_action", "Plan belongs to a different cart operation")
         return plan
@@ -208,7 +215,8 @@ class CartService:
         )
 
     async def execute(self, plan_id: str, action: CartAction) -> CartOperation:
-        record = await self.journal.get(plan_id)
+        async with self.journal() as journal:
+            record = await journal.get(plan_id)
         plan = CartPlan.model_validate(record["plan"])
         if plan.action != action:
             raise GatewayError("wrong_action", "Plan belongs to a different cart operation")
@@ -219,7 +227,8 @@ class CartService:
                 return CartOperation.model_validate(record["result"])
             if record["state"] == "prepared":
                 # Commit exclusive execution ownership via a unique account constraint and CAS.
-                claimed = await self.journal.transition(record, "prepared", "executing")
+                async with self.journal() as journal:
+                    claimed = await journal.transition(record, "prepared", "executing")
                 if claimed is None:
                     return await self._existing(plan_id)
                 record = claimed
@@ -255,7 +264,8 @@ class CartService:
             return await self._finish(record, result)
 
     async def _existing(self, plan_id: str) -> CartOperation:
-        record = await self.journal.get(plan_id)
+        async with self.journal() as journal:
+            record = await journal.get(plan_id)
         if record.get("result") is not None:
             return CartOperation.model_validate(record["result"])
         return CartOperation(
@@ -264,5 +274,6 @@ class CartService:
 
     async def _finish(self, record: dict, result: CartOperation) -> CartOperation:
         record["result"] = result.model_dump(mode="json", round_trip=True)
-        saved = await self.journal.transition(record, record["state"], result.state)
+        async with self.journal() as journal:
+            saved = await journal.transition(record, record["state"], result.state)
         return result if saved else await self._existing(result.plan_id)

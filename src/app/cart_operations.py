@@ -41,7 +41,8 @@ async def inspect_operation(
     service: CartService, operation_id: str, *, reconcile: bool = False
 ) -> CartOperationStatus:
     async with service.gateway_factory() as gateway:
-        record = await service.journal.get(operation_id)
+        async with service.journal() as journal:
+            record = await journal.get(operation_id)
         if record["connection_id"] != gateway.connection_id:
             raise GatewayError("plan_not_found", "Operation not found for this account")
         # Executing ownership cannot be stolen: another worker may still send its mutation.
@@ -75,5 +76,7 @@ async def inspect_operation(
                 else "cart_does_not_match_expected_selection",
             )
             record["result"] = replacement_result.model_dump(mode="json", round_trip=True)
-            await service.journal.transition(record, "uncertain", replacement_result.state)
-        return operation_status(await service.journal.get(operation_id))
+            async with service.journal() as journal:
+                await journal.transition(record, "uncertain", replacement_result.state)
+        async with service.journal() as journal:
+            return operation_status(await journal.get(operation_id))

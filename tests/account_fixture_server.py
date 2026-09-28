@@ -8,9 +8,9 @@ import httpx
 from dishka import Provider, Scope, provide
 
 from src.app.accounts import AccountService
+from src.app.dependencies import JournalFactory
 from src.app.replacement import CartReplacer
 from src.config.settings import state_directory
-from src.infra.db.cart_journal import CartJournal
 from src.infra.http import GatewayError
 from src.infra.http.account_login import LoginOutcome, PasswordLogin
 from src.infra.http.auth import check_login
@@ -104,7 +104,7 @@ async def gateway(session):
 
 class SyntheticAccounts(Provider):
     @provide(scope=Scope.APP, override=True)
-    async def accounts(self, journal: CartJournal) -> AsyncGenerator[AccountService, None]:
+    async def accounts(self, journal: JournalFactory) -> AsyncGenerator[AccountService, None]:
         service = AccountService(
             SyntheticLogin(),
             gateway,
@@ -116,5 +116,5 @@ class SyntheticAccounts(Provider):
             service.sessions.clear()
 
 
-if __name__ == "__main__":
-    create_server(providers=[SyntheticAccounts()]).run(transport="stdio")
+def create_fixture_server():
+    return create_server(providers=[SyntheticAccounts()])

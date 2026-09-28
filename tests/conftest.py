@@ -119,12 +119,12 @@ async def database(postgres_dsn):
     from psycopg import sql
     from psycopg.conninfo import make_conninfo
 
-    from src.infra.db import Database
+    from src.infra.db import DBConnection
 
     schema = "test_" + uuid4().hex
     async with await psycopg.AsyncConnection.connect(postgres_dsn, autocommit=True) as db:
         await db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
-    database = Database(make_conninfo(postgres_dsn, options=f"-c search_path={schema}"))
+    database = DBConnection(make_conninfo(postgres_dsn, options=f"-c search_path={schema}"))
     try:
         yield database
     finally:
@@ -135,11 +135,11 @@ async def database(postgres_dsn):
 
 @pytest.fixture
 async def journal(database):
-    from src.infra.db import CartJournal
-    from src.infra.db.schema import initialize_database
+    from tests.database_migrations import migrate_database
+    from tests.database_scopes import JournalClient
 
-    await initialize_database(database)
-    return CartJournal(database)
+    await migrate_database(database)
+    return JournalClient(database)
 
 
 @pytest.fixture

@@ -8,14 +8,16 @@ import sys
 import pytest
 
 from src.app.cart import CartService
-from src.infra.db import CartJournal, Database
+from src.infra.db import DBConnection
 from src.infra.db.exceptions import (
     DatabaseNotConfigured,
     DatabaseUnavailable,
     OperationConflict,
     UnresolvedOperation,
 )
+from src.infra.db.repositories import CartJournal
 from src.infra.http import GatewayError
+from tests.database_scopes import JournalClient
 from tests.test_cart import add
 
 
@@ -25,8 +27,8 @@ def record(key, connection="account", state="prepared"):
 
 async def test_claim_is_atomic_across_independent_database_connections(journal):
     first = await journal.insert(record("a"))
-    other_database = Database(journal.database._dsn)
-    other = CartJournal(other_database)
+    other_database = DBConnection(journal.database._dsn)
+    other = JournalClient(other_database)
     claims = await asyncio.gather(
         journal.transition(first, "prepared", "executing"),
         other.transition(first, "prepared", "executing"),
@@ -62,7 +64,7 @@ async def test_duplicate_id_is_not_overwritten(journal):
 
 async def test_unconfigured_database_has_sanitized_error():
     with pytest.raises(DatabaseNotConfigured) as caught:
-        await CartJournal(Database(None)).get("id")
+        await JournalClient(DBConnection(None)).get("id")
     assert caught.value.code == "database_not_configured"
 
 
@@ -116,17 +118,18 @@ async def test_claim_is_atomic_across_processes(journal):
     await journal.insert(record("process-test"))
     code = """
 import asyncio, json, os
-from src.infra.db import CartJournal, Database
-async def main():
-    database = Database(os.environ["TEST_JOURNAL_DSN"])
-    journal = CartJournal(database)
+from tests.database_scopes import JournalClient
+from src.infra.db import DBConnection
+async def claim():
+    database = DBConnection(os.environ["TEST_JOURNAL_DSN"])
+    journal = JournalClient(database)
     row = await journal.get("process-test")
     result = None
     if row["state"] == "prepared":
         result = await journal.transition(row, "prepared", "executing")
     await database.aclose()
     print(json.dumps({"claimed": result is not None}))
-asyncio.run(main())
+asyncio.run(claim())
 """
     assert journal.database._dsn is not None
     environment = dict(os.environ, TEST_JOURNAL_DSN=journal.database._dsn)
@@ -150,18 +153,18 @@ asyncio.run(main())
 async def test_database_failure_after_write_preserves_executing_record(cart_setup, monkeypatch):
     service, gateway = cart_setup
     plan = await service.prepare(add())
-    transition = service.journal.transition
+    transition = CartJournal.transition
 
-    async def fail_finish(record, expected_state, state):
+    async def fail_finish(self, record, expected_state, state):
         if expected_state == "executing":
             raise DatabaseUnavailable()
-        return await transition(record, expected_state, state)
+        return await transition(self, record, expected_state, state)
 
-    monkeypatch.setattr(service.journal, "transition", fail_finish)
+    monkeypatch.setattr(CartJournal, "transition", fail_finish)
     with pytest.raises(DatabaseUnavailable):
         await service.execute(plan.plan_id, "add")
     assert gateway.writes == ["add"]
     assert (await service.journal.get(plan.plan_id))["state"] == "executing"
-    monkeypatch.setattr(service.journal, "transition", transition)
+    monkeypatch.setattr(CartJournal, "transition", transition)
     assert (await service.execute(plan.plan_id, "add")).state == "uncertain"
     assert gateway.writes == ["add"]

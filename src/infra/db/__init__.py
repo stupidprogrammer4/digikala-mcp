@@ -1,6 +1,5 @@
-"""PostgreSQL persistence; independent of HTTP gateways and the public catalog cache."""
+"""PostgreSQL resources; independent of application, HTTP and cache code."""
 
-from src.infra.db.cart_journal import CartJournal
-from src.infra.db.session import Database
+from src.infra.db.connection import DBConnection
 
-__all__ = ["CartJournal", "Database"]
+__all__ = ["DBConnection"]

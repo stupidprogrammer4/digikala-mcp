@@ -10,7 +10,8 @@ from sqlmodel import col, select
 from src.app.accounts import AccountService
 from src.app.cart import CartService
 from src.bootstrap import create_container
-from src.infra.db import CartJournal, Database
+from src.infra.db import DBConnection
+from src.infra.db.connection import connection_options
 from src.infra.db.exceptions import (
     DatabaseClosed,
     DatabaseConfigurationError,
@@ -19,10 +20,11 @@ from src.infra.db.exceptions import (
     OperationConflict,
     OperationNotFound,
 )
-from src.infra.db.schema import initialize_database
-from src.infra.db.session import connection_options
+from src.infra.db.repositories import CartJournal
 from src.models.db import CartOperationRow
 from src.server import create_server
+from tests.database_migrations import migrate_database
+from tests.database_scopes import JournalClient
 from tests.test_cart import add
 from tests.test_journal import record
 
@@ -40,10 +42,10 @@ def test_url_driver_and_sensitive_characters_are_preserved(scheme):
 
 @pytest.mark.parametrize("dsn", ["sqlite:///tmp/not-postgres", "broken password=private-secret"])
 async def test_bad_configuration_is_lazy_and_sanitized(dsn):
-    database = Database(dsn)
+    database = DBConnection(dsn)
     try:
         with pytest.raises(DatabaseConfigurationError) as caught:
-            await CartJournal(database).find("id")
+            await JournalClient(database).find("id")
         assert "private-secret" not in str(caught.value)
         assert dsn not in str(caught.value)
     finally:
@@ -52,10 +54,10 @@ async def test_bad_configuration_is_lazy_and_sanitized(dsn):
 
 async def test_missing_schema_is_not_created_by_repository(database):
     with pytest.raises(DatabaseUnavailable):
-        await CartJournal(database).find("missing")
-    await initialize_database(database)
+        await JournalClient(database).find("missing")
+    await migrate_database(database)
     with pytest.raises(OperationNotFound):
-        await CartJournal(database).get("missing")
+        await JournalClient(database).get("missing")
 
 
 async def test_sqlmodel_round_trip_and_repository_snapshots_do_not_alias(journal):
@@ -152,8 +154,9 @@ async def test_dishka_owns_one_database_for_both_cart_paths_and_disposes_it():
     container = create_container()
     cart = await container.get(CartService)
     accounts = await container.get(AccountService)
-    database = await container.get(Database)
-    assert cart.journal.database is accounts.replacer.journal.database is database
+    database = await container.get(DBConnection)
+    assert cart.journal is accounts.replacer.journal
+    assert await container.get(DBConnection) is database
     await container.close()
     with pytest.raises(DatabaseClosed):
         _ = database.engine
@@ -164,14 +167,14 @@ async def test_database_failure_after_remote_write_is_not_reported_as_rejection(
 ):
     service, gateway = cart_setup
     plan = await service.prepare(add())
-    original = service.journal.transition
+    original = CartJournal.transition
 
-    async def fail_finish(record, expected_state, state):
+    async def fail_finish(self, record, expected_state, state):
         if expected_state == "executing":
             raise DatabaseUnavailable()
-        return await original(record, expected_state, state)
+        return await original(self, record, expected_state, state)
 
-    monkeypatch.setattr(service.journal, "transition", fail_finish)
+    monkeypatch.setattr(CartJournal, "transition", fail_finish)
     async with Client(create_server(cart_service=service)) as client:
         result = await client.call_tool(
             "add_to_cart", {"plan_id": plan.plan_id}, raise_on_error=False
@@ -182,7 +185,7 @@ async def test_database_failure_after_remote_write_is_not_reported_as_rejection(
     assert (await service.journal.get(plan.plan_id))["state"] == "executing"
 
 
-async def test_existing_psycopg_schema_and_records_survive_sqlmodel_provisioning(database):
+async def test_existing_psycopg_schema_and_records_survive_baseline_adoption(database):
     # Historical schema, deliberately not generated from the new model.
     legacy_schema = """
     CREATE TABLE cart_operations (
@@ -205,9 +208,10 @@ async def test_existing_psycopg_schema_and_records_survive_sqlmodel_provisioning
     """
     async with database.connection() as connection:
         await connection.exec_driver_sql(legacy_schema)
-    await initialize_database(database)
-    await initialize_database(database)
-    journal = CartJournal(database)
+    await migrate_database(database, "stamp", "0001_cart_journal")
+    await migrate_database(database)
+    await migrate_database(database)
+    journal = JournalClient(database)
     row = await journal.get("legacy")
     assert row["_revision"] == 7 and row["state"] == "executing"
     updated = await journal.transition(row, "executing", "applied")

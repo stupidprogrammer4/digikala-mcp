@@ -1,37 +1,26 @@
-"""Lazy PostgreSQL engine and one transactional SQLModel session per operation."""
+"""Application-owned PostgreSQL engine, pool and SQLModel session factory."""
 
-from collections.abc import AsyncGenerator, Generator
-from contextlib import asynccontextmanager, contextmanager
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 from psycopg import ProgrammingError
 from psycopg.conninfo import conninfo_to_dict
 from sqlalchemy.engine import URL, make_url
-from sqlalchemy.exc import ArgumentError, IntegrityError, SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
+from sqlalchemy.exc import ArgumentError
+from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
+    AsyncEngine,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from src.infra.db.errors import database_errors
 from src.infra.db.exceptions import (
     DatabaseClosed,
     DatabaseConfigurationError,
-    DatabaseIntegrityError,
     DatabaseNotConfigured,
-    DatabaseUnavailable,
 )
-
-
-@contextmanager
-def database_errors() -> Generator[None, None, None]:
-    """Never expose driver messages, SQL statements, parameters or connection credentials."""
-    try:
-        yield
-    except IntegrityError as exc:
-        diagnostic = getattr(exc.orig, "diag", None)
-        raise DatabaseIntegrityError(
-            constraint=getattr(diagnostic, "constraint_name", None),
-            sqlstate=getattr(exc.orig, "sqlstate", None),
-        ) from None
-    except SQLAlchemyError:
-        raise DatabaseUnavailable() from None
 
 
 def connection_options(dsn: str) -> tuple[URL, dict]:
@@ -49,13 +38,14 @@ def connection_options(dsn: str) -> tuple[URL, dict]:
         raise DatabaseConfigurationError() from None
 
 
-class Database:
+class DBConnection:
     """Application-owned resource; constructing it never connects or creates tables."""
 
     def __init__(self, dsn: str | None):
         self._dsn = dsn
         self._engine: AsyncEngine | None = None
         self._closed = False
+        self._session_factory: async_sessionmaker[AsyncSession] | None = None
 
     @property
     def engine(self) -> AsyncEngine:
@@ -77,13 +67,25 @@ class Database:
             )
         return self._engine
 
+    @property
+    def session_factory(self) -> async_sessionmaker[AsyncSession]:
+        engine = self.engine  # Also checks that the connection has not been closed.
+        if self._session_factory is None:
+            self._session_factory = async_sessionmaker(
+                engine,
+                class_=AsyncSession,
+                autoflush=False,
+                expire_on_commit=False,
+                close_resets_only=False,
+            )
+        return self._session_factory
+
     @asynccontextmanager
     async def session(self) -> AsyncGenerator[AsyncSession, None]:
-        """A session is never shared across tasks; commit or roll back at the boundary."""
+        """Open a fresh session; the caller owns commit or rollback."""
         with database_errors():
-            async with AsyncSession(self.engine, expire_on_commit=False) as session:
-                async with session.begin():
-                    yield session
+            async with self.session_factory() as session:
+                yield session
 
     @asynccontextmanager
     async def connection(self) -> AsyncGenerator[AsyncConnection, None]:

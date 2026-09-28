@@ -19,6 +19,7 @@ dependencies = [
     "psycopg[binary]>=3.2,<4",
     "sqlmodel==0.0.47",
     "sqlalchemy[asyncio]>=2.0,<2.1",
+    "alembic>=1.18.4,<2",
 ]
 
 [project.optional-dependencies]
@@ -43,7 +44,7 @@ line-length = 100
 select = ["E", "F", "I"]
 
 [tool.pyright]
-include = ["src", "tests"]
+include = ["src", "tests", "migrations"]
 pythonVersion = "3.11"
 typeCheckingMode = "standard"
 reportDeprecated = "error"

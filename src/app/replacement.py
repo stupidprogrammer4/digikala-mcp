@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 
 from src.app.cart import same_cart
-from src.infra.db.cart_journal import CartJournal
+from src.app.dependencies import JournalFactory
 from src.infra.db.exceptions import OperationConflict
 from src.infra.http import GatewayError
 from src.infra.http.gateways.cart import CartGateway
@@ -12,7 +12,7 @@ from src.models.schemas.cart import CartLimits, CartPlan, CartSnapshot
 
 
 class CartReplacer:
-    def __init__(self, journal: CartJournal, limits: CartLimits | None):
+    def __init__(self, journal: JournalFactory, limits: CartLimits | None):
         self.journal, self.limits = journal, limits
 
     @staticmethod
@@ -33,24 +33,27 @@ class CartReplacer:
     ) -> CartReplacementResult:
         fingerprint = sha256(request.model_dump_json().encode()).hexdigest()
         key = request.request_id.hex
-        record = await self.journal.find(key)
+        async with self.journal() as journal:
+            record = await journal.find(key)
         if record is not None:
             return self._existing(record, gateway.connection_id, fingerprint, request)
         try:
-            record = await self.journal.insert(
-                {
-                    "plan": {"plan_id": key},
-                    "connection_id": gateway.connection_id,
-                    "fingerprint": fingerprint,
-                    "request": request.model_dump(mode="json"),
-                    "limits": self.limits.model_dump() if self.limits else None,
-                    "state": "executing",
-                }
-            )
+            async with self.journal() as journal:
+                record = await journal.insert(
+                    {
+                        "plan": {"plan_id": key},
+                        "connection_id": gateway.connection_id,
+                        "fingerprint": fingerprint,
+                        "request": request.model_dump(mode="json"),
+                        "limits": self.limits.model_dump() if self.limits else None,
+                        "state": "executing",
+                    }
+                )
         except OperationConflict:
-            return self._existing(
-                await self.journal.get(key), gateway.connection_id, fingerprint, request
-            )
+            async with self.journal() as journal:
+                return self._existing(
+                    await journal.get(key), gateway.connection_id, fingerprint, request
+                )
         try:
             before = await gateway.read()
             if before.has_unsupported_extras:
@@ -86,7 +89,8 @@ class CartReplacer:
                 request_id=request.request_id, state="rejected", reason=error.error.code
             )
             record["result"] = result.model_dump(mode="json", round_trip=True)
-            await self.journal.transition(record, "executing", "rejected")
+            async with self.journal() as journal:
+                await journal.transition(record, "executing", "rejected")
             return result
         expected = before
         try:
@@ -157,7 +161,8 @@ class CartReplacer:
                 request_id=request.request_id, state="uncertain", reason=error.error.code
             )
         record.update(state=result.state, result=result.model_dump(mode="json", round_trip=True))
-        await self.journal.transition(record, "executing", result.state)
+        async with self.journal() as journal:
+            await journal.transition(record, "executing", result.state)
         return result
 
     @staticmethod

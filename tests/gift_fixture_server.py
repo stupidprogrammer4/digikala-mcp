@@ -41,5 +41,5 @@ async def catalog():
         yield CatalogService([SyntheticCatalog(HTTPConnection(client, "https://unused.example"))])
 
 
-if __name__ == "__main__":
-    create_server(catalog_factory=catalog, providers=[SyntheticAccounts()]).run(transport="stdio")
+def create_fixture_server():
+    return create_server(catalog_factory=catalog, providers=[SyntheticAccounts()])

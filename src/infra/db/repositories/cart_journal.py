@@ -1,44 +1,22 @@
-"""SQLModel repository for atomic cart claims and versioned state transitions."""
+"""Cart SQL operations on an injected session; lifecycle belongs to Dishka."""
 
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
 from copy import deepcopy
 
 from sqlalchemy import func, update
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.infra.db.exceptions import (
-    DatabaseIntegrityError,
-    OperationConflict,
-    OperationNotFound,
-    UnresolvedOperation,
-)
-from src.infra.db.session import Database
+from src.infra.db.exceptions import OperationNotFound
 from src.models.db import CartOperationRow, OperationState
 
 
 class CartJournal:
-    def __init__(self, database: Database):
-        self.database = database
-
-    @asynccontextmanager
-    async def _session(self) -> AsyncGenerator[AsyncSession, None]:
-        try:
-            async with self.database.session() as session:
-                yield session
-        except DatabaseIntegrityError as exc:
-            if exc.sqlstate == "23505":
-                if exc.constraint == "cart_one_unresolved_operation":
-                    raise UnresolvedOperation() from None
-                if exc.constraint == "cart_operations_pkey":
-                    raise OperationConflict() from None
-            raise
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
 
     async def find(self, plan_id: str) -> dict | None:
-        async with self._session() as session:
-            row = await session.get(CartOperationRow, plan_id)
-            return row.versioned_record() if row is not None else None
+        row = await self.session.get(CartOperationRow, plan_id)
+        return row.versioned_record() if row is not None else None
 
     async def get(self, plan_id: str) -> dict:
         record = await self.find(plan_id)
@@ -55,17 +33,15 @@ class CartJournal:
                 "record": deepcopy(record),
             }
         )
-        async with self._session() as session:
-            session.add(row)
-            await session.flush()
-            result = row.versioned_record()
-        return result
+        self.session.add(row)
+        await self.session.flush()
+        return row.versioned_record()
 
     async def transition(
         self, record: dict, expected_state: OperationState, state: OperationState
     ) -> dict | None:
-        """One conditional UPDATE: a stale revision cannot claim or finish an operation."""
-        payload = {k: deepcopy(v) for k, v in record.items() if k != "_revision"}
+        """A single conditional UPDATE prevents stale claims or result overwrites."""
+        payload = {key: deepcopy(value) for key, value in record.items() if key != "_revision"}
         payload["state"] = state
         statement = (
             update(CartOperationRow)
@@ -83,11 +59,9 @@ class CartJournal:
             )
             .returning(CartOperationRow)
         )
-        async with self._session() as session:
-            result = await session.exec(statement)
-            row = result.scalar_one_or_none()
-            versioned = row.versioned_record() if row is not None else None
-        return versioned
+        row = (await self.session.exec(statement)).scalar_one_or_none()
+        await self.session.flush()
+        return row.versioned_record() if row is not None else None
 
     async def unresolved(self, connection_id: str) -> bool:
         statement = (
@@ -98,5 +72,4 @@ class CartJournal:
             )
             .limit(1)
         )
-        async with self._session() as session:
-            return (await session.exec(statement)).first() is not None
+        return (await self.session.exec(statement)).first() is not None
