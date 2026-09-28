@@ -3,7 +3,7 @@ import pytest
 
 from src.config.settings import cart_limits
 from src.infra.http import GatewayError
-from src.infra.session import SessionStore
+from src.infra.http.session import SessionStore
 
 
 class MemoryBackend:

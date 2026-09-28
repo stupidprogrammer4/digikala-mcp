@@ -5,13 +5,7 @@ from typing import Any
 
 import httpx
 
-from src.models import MarketError
-
-
-class GatewayError(Exception):
-    def __init__(self, code: str, message: str, retryable: bool = False):
-        super().__init__(message)
-        self.error = MarketError(code=code, message=message, retryable=retryable)
+from src.infra.http.exceptions import GatewayError
 
 
 class HTTPConnection:

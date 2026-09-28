@@ -1,4 +1,4 @@
-"""Local interactive account setup. Credentials are never MCP tool arguments."""
+"""Local interactive setup for the desktop keyring account."""
 
 import argparse
 import getpass
@@ -8,9 +8,9 @@ import sys
 
 import httpx
 
-from src.infra.auth import check_login
 from src.infra.http import GatewayError
-from src.infra.session import HEADERS, SessionStore
+from src.infra.http.auth import check_login
+from src.infra.http.session import HEADERS, SessionStore
 
 
 def main() -> int:

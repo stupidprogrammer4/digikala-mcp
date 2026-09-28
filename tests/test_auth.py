@@ -5,7 +5,7 @@ import json
 import httpx
 import pytest
 
-from src.infra.auth import check_login
+from src.infra.http.auth import check_login
 
 
 def test_otp_default_does_not_hide_available_password_login():
