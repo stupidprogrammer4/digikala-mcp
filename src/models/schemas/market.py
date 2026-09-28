@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Literal
 
-from src.models.base import Model
+from src.models.schemas.base import Model
 
 
 class Market(StrEnum):

@@ -1,8 +1,8 @@
 from pydantic import Field
 
-from src.models.base import Model
-from src.models.category import CategoryId
-from src.models.market import Market, MarketError
+from src.models.schemas.base import Model
+from src.models.schemas.category import CategoryId
+from src.models.schemas.market import Market, MarketError
 
 
 class Suggestion(Model):

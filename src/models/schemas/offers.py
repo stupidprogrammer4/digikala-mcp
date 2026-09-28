@@ -1,14 +1,14 @@
-"""Fresh seller offers from a single Digikala product response."""
+"""Seller offers cached up to 60 seconds from a single Digikala product response."""
 
 from datetime import datetime
 from typing import Literal
 
 from pydantic import Field
 
-from src.models.base import Model
-from src.models.common import ProductId
-from src.models.market import Market, MarketError
-from src.models.product import Offer
+from src.models.schemas.base import Model
+from src.models.schemas.common import ProductId
+from src.models.schemas.market import Market, MarketError
+from src.models.schemas.product import Offer
 
 
 class OfferListResult(Model):

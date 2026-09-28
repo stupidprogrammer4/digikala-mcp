@@ -2,9 +2,9 @@ from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 
-from src.models.base import Model
-from src.models.common import QueryText
-from src.models.market import Market, MarketError
+from src.models.schemas.base import Model
+from src.models.schemas.common import QueryText
+from src.models.schemas.market import Market, MarketError
 
 CategoryId = Annotated[str, Field(pattern=r"^[1-9][0-9]{0,19}$")]
 

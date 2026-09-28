@@ -1,14 +1,14 @@
-"""Inputs and fresh observations for comparing explicitly selected seller offers."""
+"""Inputs and timestamped observations for comparing explicitly selected seller offers."""
 
 from datetime import datetime
 from typing import Literal, Self
 
 from pydantic import Field, model_validator
 
-from src.models.base import Model
-from src.models.common import Location, Money, ProductId
-from src.models.market import Market, MarketError
-from src.models.product import Offer
+from src.models.schemas.base import Model
+from src.models.schemas.common import Location, Money, ProductId
+from src.models.schemas.market import Market, MarketError
+from src.models.schemas.product import Offer
 
 
 class OfferSelection(Model):
@@ -69,6 +69,7 @@ class ComparisonResponse(Model):
     pairs: list[OfferPairComparison]
     notes: list[str] = Field(
         default_factory=lambda: [
+            "Catalog observations may be cached for up to 60 seconds.",
             "Item prices exclude shipping; no cheapest checkout or product ranking is implied.",
             "Matching titles or attributes do not establish identity across listings.",
         ]

@@ -5,9 +5,9 @@ from typing import Annotated, Literal
 
 from pydantic import ConfigDict, Field, computed_field
 
-from src.models.base import Model
-from src.models.common import Money, ProductId
-from src.models.product import Offer
+from src.models.schemas.base import Model
+from src.models.schemas.common import Money, ProductId
+from src.models.schemas.product import Offer
 
 Quantity = Annotated[int, Field(ge=1, le=999, strict=True)]
 CartItemId = (

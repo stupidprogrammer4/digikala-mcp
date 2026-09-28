@@ -2,11 +2,12 @@ from typing import Literal, Self
 
 from pydantic import Field, model_validator
 
-from src.models.base import Model
-from src.models.category import CategoryId
-from src.models.common import Location, Money, QueryText
-from src.models.market import Market, MarketError
-from src.models.product import Product
+from src.models.schemas.base import Model
+from src.models.schemas.category import CategoryId
+from src.models.schemas.common import Location, Money, QueryText
+from src.models.schemas.market import Market, MarketError
+from src.models.schemas.product import Product
+from src.models.schemas.research import FilterSelection
 
 
 class SearchQuery(Model):
@@ -15,10 +16,13 @@ class SearchQuery(Model):
     page: int = Field(default=1, ge=1, le=500, strict=True)
     min_price_rial: Money | None = None
     max_price_rial: Money | None = None
+    filters: FilterSelection = Field(default_factory=FilterSelection)
     sort: Literal["relevance", "price_asc", "price_desc"] = "relevance"
 
     @model_validator(mode="after")
     def valid_range(self) -> Self:
+        if self.filters.values and self.category_id is None:
+            raise ValueError("Category filters require category_id")
         if self.query is None and self.category_id is None:
             raise ValueError("Provide query or category_id")
         if (
